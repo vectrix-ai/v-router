@@ -93,21 +93,6 @@ class GoogleProvider(BaseProvider):
 
         return "\n\n".join(formatted_parts)
 
-    def validate_model_name(self, model: str) -> str:
-        """Validate and transform model name for Google."""
-        # Common model name mappings
-        model_mappings = {
-            "gemini-pro": "gemini-1.0-pro",
-            "gemini-pro-vision": "gemini-1.0-pro-vision",
-            "gemini-1.5-pro": "gemini-1.5-pro-latest",
-            "gemini-1.5-flash": "gemini-1.5-flash-latest",
-            "gemini-2-flash": "gemini-2.0-flash-001",
-            "gemini-2.0-flash": "gemini-2.0-flash-001",
-        }
-
-        # Return mapped name if exists, otherwise return as-is
-        return model_mappings.get(model, model)
-
     @property
     def name(self) -> str:
         """Return the provider name."""
@@ -211,21 +196,6 @@ class GoogleVertexProvider(BaseProvider):
                 formatted_parts.append(f"Assistant: {msg.content}")
 
         return "\n\n".join(formatted_parts)
-
-    def validate_model_name(self, model: str) -> str:
-        """Validate and transform model name for Vertex AI."""
-        # Common model name mappings (same as regular Google)
-        model_mappings = {
-            "gemini-pro": "gemini-1.0-pro",
-            "gemini-pro-vision": "gemini-1.0-pro-vision",
-            "gemini-1.5-pro": "gemini-1.5-pro-latest",
-            "gemini-1.5-flash": "gemini-1.5-flash-latest",
-            "gemini-2-flash": "gemini-2.0-flash-001",
-            "gemini-2.0-flash": "gemini-2.0-flash-001",
-        }
-
-        # Return mapped name if exists, otherwise return as-is
-        return model_mappings.get(model, model)
 
     @property
     def name(self) -> str:

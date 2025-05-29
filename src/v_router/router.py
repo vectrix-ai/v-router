@@ -1,4 +1,7 @@
+from pathlib import Path
 from typing import Dict, List, Type
+
+import yaml
 
 from .classes.llm import LLM
 from .logger import setup_logger
@@ -8,6 +11,25 @@ from .providers.google import GoogleProvider, GoogleVertexProvider
 from .providers.openai import AzureOpenAIProvider, OpenAIProvider
 
 logger = setup_logger(__name__)
+
+
+def load_model_config() -> Dict[str, Dict]:
+    """Load model configuration from models.yml file.
+
+    Returns:
+        Dictionary with model configuration including providers and mappings
+
+    """
+    config_path = Path(__file__).parent / "models.yml"
+
+    try:
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        return config.get("models", {})
+    except Exception as e:
+        logger.error(f"Failed to load model configuration: {e}")
+        # Return empty dict if loading fails, allowing graceful degradation
+        return {}
 
 
 class Router:
@@ -22,31 +44,6 @@ class Router:
         "vertexai": GoogleVertexProvider,  # Can be used for both Anthropic and Google on Vertex
     }
 
-    # Model availability across providers
-    MODEL_PROVIDERS = {
-        # Anthropic models
-        "claude-3-opus": ["anthropic", "vertexai"],
-        "claude-3-opus-20240229": ["anthropic", "vertexai"],
-        "claude-3-sonnet": ["anthropic", "vertexai"],
-        "claude-3-sonnet-20240229": ["anthropic", "vertexai"],
-        "claude-3-haiku": ["anthropic", "vertexai"],
-        "claude-3-haiku-20240307": ["anthropic", "vertexai"],
-        "claude-sonnet-4": ["anthropic", "vertexai"],
-        "claude-sonnet-4-20250514": ["anthropic", "vertexai"],
-        "claude-opus-4": ["anthropic", "vertexai"],
-        "claude-opus-4-20250514": ["anthropic", "vertexai"],
-        # OpenAI models
-        "gpt-4": ["openai", "azure"],
-        "gpt-4-turbo": ["openai", "azure"],
-        "gpt-4.1": ["openai", "azure"],
-        "gpt-3.5-turbo": ["openai", "azure"],
-        # Google models
-        "gemini-pro": ["google", "vertexai"],
-        "gemini-1.5-pro": ["google", "vertexai"],
-        "gemini-1.5-flash": ["google", "vertexai"],
-        "gemini-2.0-flash": ["google", "vertexai"],
-    }
-
     def __init__(self, llm_config: LLM, **provider_kwargs):
         """Initialize router with LLM configuration.
 
@@ -58,6 +55,50 @@ class Router:
         self.primary_config = llm_config
         self.provider_kwargs = provider_kwargs
         self._provider_instances: Dict[str, BaseProvider] = {}
+        self._model_config_cache = None
+
+    @property
+    def model_config(self) -> Dict[str, Dict]:
+        """Get model configuration, loading from file if needed.
+
+        This property allows for dynamic reloading of the configuration.
+        """
+        if self._model_config_cache is None:
+            self._model_config_cache = load_model_config()
+        return self._model_config_cache
+
+    def reload_model_config(self) -> None:
+        """Reload the model configuration from models.yml."""
+        self._model_config_cache = load_model_config()
+        logger.info("Reloaded model configuration from models.yml")
+
+    def get_model_providers(self, model_name: str) -> List[str]:
+        """Get available providers for a model.
+
+        Args:
+            model_name: Model name to check
+
+        Returns:
+            List of provider names that support this model
+
+        """
+        model_info = self.model_config.get(model_name, {})
+        return model_info.get("providers", [])
+
+    def get_model_mapping(self, model_name: str, provider: str) -> str:
+        """Get the provider-specific model name mapping.
+
+        Args:
+            model_name: Original model name
+            provider: Provider name
+
+        Returns:
+            Provider-specific model name, or original if no mapping exists
+
+        """
+        model_info = self.model_config.get(model_name, {})
+        mappings = model_info.get("mappings", {})
+        return mappings.get(provider, model_name)
 
     def _get_provider(self, provider_name: str) -> BaseProvider:
         """Get or create a provider instance.
@@ -75,20 +116,24 @@ class Router:
 
             provider_class = self.PROVIDER_REGISTRY[provider_name]
 
+            # Create a model mapping function for this provider
+            def model_mapper(model_name: str) -> str:
+                return self.get_model_mapping(model_name, provider_name)
+
             # Special handling for Vertex AI providers
             if provider_name == "vertexai":
                 # Determine if it's Anthropic or Google based on model
                 if self.primary_config.model_name.startswith("claude"):
                     self._provider_instances[provider_name] = AnthropicVertexProvider(
-                        **self.provider_kwargs
+                        model_mapper=model_mapper, **self.provider_kwargs
                     )
                 else:
                     self._provider_instances[provider_name] = GoogleVertexProvider(
-                        **self.provider_kwargs
+                        model_mapper=model_mapper, **self.provider_kwargs
                     )
             else:
                 self._provider_instances[provider_name] = provider_class(
-                    **self.provider_kwargs
+                    model_mapper=model_mapper, **self.provider_kwargs
                 )
 
         return self._provider_instances[provider_name]
@@ -199,14 +244,14 @@ class Router:
 
         """
         # Check exact model name first
-        if model_name in self.MODEL_PROVIDERS:
-            providers = self.MODEL_PROVIDERS[model_name]
+        if model_name in self.model_config:
+            providers = self.model_config[model_name].get("providers", [])
         else:
             # Try to find by prefix (e.g., "claude-3-opus" matches "claude-3-opus-20240229")
             providers = []
-            for model, model_providers in self.MODEL_PROVIDERS.items():
+            for model, model_info in self.model_config.items():
                 if model_name.startswith(model) or model.startswith(model_name):
-                    providers.extend(model_providers)
+                    providers.extend(model_info.get("providers", []))
             providers = list(set(providers))  # Remove duplicates
 
         # Filter out excluded providers

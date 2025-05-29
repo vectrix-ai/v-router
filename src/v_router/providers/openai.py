@@ -70,19 +70,6 @@ class OpenAIProvider(BaseProvider):
             raw_response=response,
         )
 
-    def validate_model_name(self, model: str) -> str:
-        """Validate and transform model name for OpenAI."""
-        # Common model name mappings
-        model_mappings = {
-            "gpt-4": "gpt-4",
-            "gpt-4-turbo": "gpt-4-turbo-preview",
-            "gpt-3.5": "gpt-3.5-turbo",
-            "gpt-3.5-turbo": "gpt-3.5-turbo",
-        }
-
-        # Return mapped name if exists, otherwise return as-is
-        return model_mappings.get(model, model)
-
     @property
     def name(self) -> str:
         """Return the provider name."""
@@ -176,10 +163,6 @@ class AzureOpenAIProvider(BaseProvider):
             else None,
             raw_response=response,
         )
-
-    def validate_model_name(self, model: str) -> str:
-        """For Azure, model names are deployment names and shouldn't be transformed."""
-        return model
 
     @property
     def name(self) -> str:

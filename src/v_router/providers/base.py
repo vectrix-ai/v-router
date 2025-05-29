@@ -23,11 +23,18 @@ class Response(BaseModel):
 
 
 class BaseProvider(ABC):
-    """Abstract base class for all LLM providers."""
+    """Base class for all LLM providers."""
 
-    def __init__(self, **kwargs):
-        """Initialize the provider with necessary credentials."""
-        self.kwargs = kwargs
+    def __init__(self, model_mapper=None, **kwargs):
+        """Initialize the provider.
+
+        Args:
+            model_mapper: Optional function to map model names
+            **kwargs: Additional provider-specific configuration
+
+        """
+        self.model_mapper = model_mapper
+        self.config = kwargs
 
     @abstractmethod
     async def create_message(
@@ -41,30 +48,31 @@ class BaseProvider(ABC):
         """Create a message using the provider's API.
 
         Args:
-            messages: List of messages in the conversation
+            messages: List of messages to send
             model: Model name to use
             max_tokens: Maximum tokens to generate
-            temperature: Sampling temperature
+            temperature: Temperature for generation
             **kwargs: Additional provider-specific parameters
 
         Returns:
-            Unified Response object
+            Response from the provider
 
         """
         pass
 
-    @abstractmethod
     def validate_model_name(self, model: str) -> str:
-        """Validate and potentially transform model name for this provider.
+        """Validate and transform model name for the provider.
 
         Args:
-            model: Model name from configuration
+            model: Original model name
 
         Returns:
             Provider-specific model name
 
         """
-        pass
+        if self.model_mapper:
+            return self.model_mapper(model)
+        return model
 
     @property
     @abstractmethod

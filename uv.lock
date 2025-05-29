@@ -1259,6 +1259,7 @@ dependencies = [
     { name = "google-cloud-aiplatform" },
     { name = "google-genai" },
     { name = "openai" },
+    { name = "pyyaml" },
 ]
 
 [package.dev-dependencies]
@@ -1278,6 +1279,7 @@ requires-dist = [
     { name = "google-cloud-aiplatform", specifier = ">=1.94.0" },
     { name = "google-genai", specifier = ">=1.16.1" },
     { name = "openai", specifier = ">=1.82.0" },
+    { name = "pyyaml", specifier = ">=6.0.2" },
 ]
 
 [package.metadata.requires-dev]

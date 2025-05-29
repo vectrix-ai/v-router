@@ -85,20 +85,6 @@ class AnthropicProvider(BaseProvider):
             raw_response=response,
         )
 
-    def validate_model_name(self, model: str) -> str:
-        """Validate and transform model name for Anthropic."""
-        # Common model name mappings
-        model_mappings = {
-            "claude-3-opus": "claude-3-opus-20240229",
-            "claude-3-sonnet": "claude-3-sonnet-20240229",
-            "claude-3-haiku": "claude-3-haiku-20240307",
-            "claude-sonnet-4": "claude-sonnet-4-20250514",
-            "claude-opus-4": "claude-opus-4-20250514",
-        }
-
-        # Return mapped name if exists, otherwise return as-is
-        return model_mappings.get(model, model)
-
     @property
     def name(self) -> str:
         """Return the provider name."""
@@ -195,28 +181,6 @@ class AnthropicVertexProvider(BaseProvider):
             else None,
             raw_response=response,
         )
-
-    def validate_model_name(self, model: str) -> str:
-        """Validate and transform model name for Vertex AI.
-
-        Vertex AI uses @ notation instead of version dates.
-        """
-        # Map common names to Vertex AI format
-        model_mappings = {
-            "claude-3-opus-20240229": "claude-3-opus@20240229",
-            "claude-3-sonnet-20240229": "claude-3-sonnet@20240229",
-            "claude-3-haiku-20240307": "claude-3-haiku@20240307",
-            "claude-sonnet-4-20250514": "claude-sonnet-4@20250514",
-            "claude-opus-4-20250514": "claude-opus-4@20250514",
-            # Short names
-            "claude-3-opus": "claude-3-opus@20240229",
-            "claude-3-sonnet": "claude-3-sonnet@20240229",
-            "claude-3-haiku": "claude-3-haiku@20240307",
-            "claude-sonnet-4": "claude-sonnet-4@20250514",
-            "claude-opus-4": "claude-opus-4@20250514",
-        }
-
-        return model_mappings.get(model, model)
 
     @property
     def name(self) -> str:
