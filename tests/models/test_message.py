@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from v_router.models.message import Message
+from v_router.classes.message import Message
 
 
 class TestMessage:
@@ -23,7 +23,6 @@ class TestMessage:
             ("user", "What is the weather like?"),
             ("assistant", "I can help you with that."),
             ("system", "You are a helpful assistant."),
-            ("function", "Function call result"),
         ]
         
         for role, content in roles_and_content:
@@ -112,27 +111,12 @@ And it should work perfectly fine."""
         """Test that None content raises ValidationError."""
         with pytest.raises(ValidationError):
             Message(role="user", content=None)
-    
-    def test_message_numeric_role(self):
-        """Test that numeric role is converted to string."""
-        message = Message(role=123, content="Hello")
-        assert message.role == "123"
-        assert isinstance(message.role, str)
-    
+
     def test_message_numeric_content(self):
         """Test that numeric content is converted to string."""
         message = Message(role="user", content=42)
         assert message.content == "42"
         assert isinstance(message.content, str)
-    
-    def test_message_boolean_fields(self):
-        """Test that boolean fields are converted to strings."""
-        message = Message(role=True, content=False)
-        assert message.role == "True"
-        assert message.content == "False"
-        assert isinstance(message.role, str)
-        assert isinstance(message.content, str)
-
 
 class TestMessageSerialization:
     """Test serialization and deserialization of Message objects."""

@@ -1,8 +1,14 @@
 """Vectrix Router - Unified LLM interface with automatic fallback."""
 
+from dotenv import load_dotenv
+
 from .classes.llm import LLM, BackupModel
 from .client import Client
+from .logger import setup_logger
 from .providers.base import Message, Response
+
+load_dotenv()
+
 
 __all__ = [
     "Client",
@@ -10,9 +16,5 @@ __all__ = [
     "BackupModel",
     "Message",
     "Response",
+    "setup_logger",
 ]
-
-__version__ = "0.1.0"
-
-def main() -> None:
-    print("Hello from Vectrix Router!")
