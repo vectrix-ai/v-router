@@ -49,6 +49,9 @@ uv add <package-name>
 uv add --dev <package-name>
 ```
 
+## Python Code Execution
+- When trying to run Python code always use UV (uv run example.py)
+
 ## Architecture Overview
 
 v-router is a unified LLM interface that provides automatic fallback between different LLM providers. The architecture follows a provider pattern with these key components:

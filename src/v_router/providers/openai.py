@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 
+from v_router.classes.tools import Tools
 from v_router.providers.base import BaseProvider, Message, Response
 
 
@@ -27,6 +28,7 @@ class OpenAIProvider(BaseProvider):
         model: str,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
+        tools: Optional[Tools] = None,
         **kwargs,
     ) -> Response:
         """Create a message using OpenAI's API."""
@@ -47,6 +49,10 @@ class OpenAIProvider(BaseProvider):
         if temperature is not None:
             params["temperature"] = temperature
 
+        # Add tools if provided
+        if tools:
+            params["tools"] = self._convert_tools_to_openai_format(tools)
+
         # Add any additional kwargs
         params.update(kwargs)
 
@@ -54,7 +60,16 @@ class OpenAIProvider(BaseProvider):
         response = await self.client.chat.completions.create(**params)
 
         # Extract content from response
-        content = response.choices[0].message.content if response.choices else ""
+        content = ""
+        if response.choices and response.choices[0].message:
+            message = response.choices[0].message
+            # Check if there are tool calls
+            if hasattr(message, "tool_calls") and message.tool_calls:
+                # Return the full message object to preserve tool calls
+                content = message
+            else:
+                # Just text content
+                content = message.content if message.content else ""
 
         return Response(
             content=content,
@@ -69,6 +84,22 @@ class OpenAIProvider(BaseProvider):
             else None,
             raw_response=response,
         )
+
+    def _convert_tools_to_openai_format(self, tools: Tools) -> list:
+        """Convert Tools to OpenAI format."""
+        openai_tools = []
+        for tool in tools.tools:
+            openai_tools.append(
+                {
+                    "type": "function",
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description,
+                        "parameters": tool.input_schema,
+                    },
+                }
+            )
+        return openai_tools
 
     @property
     def name(self) -> str:
@@ -117,6 +148,7 @@ class AzureOpenAIProvider(BaseProvider):
         model: str,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
+        tools: Optional[Tools] = None,
         **kwargs,
     ) -> Response:
         """Create a message using Azure OpenAI's API.
@@ -141,6 +173,10 @@ class AzureOpenAIProvider(BaseProvider):
         if temperature is not None:
             params["temperature"] = temperature
 
+        # Add tools if provided
+        if tools:
+            params["tools"] = self._convert_tools_to_openai_format(tools)
+
         # Add any additional kwargs
         params.update(kwargs)
 
@@ -148,7 +184,16 @@ class AzureOpenAIProvider(BaseProvider):
         response = await self.client.chat.completions.create(**params)
 
         # Extract content from response
-        content = response.choices[0].message.content if response.choices else ""
+        content = ""
+        if response.choices and response.choices[0].message:
+            message = response.choices[0].message
+            # Check if there are tool calls
+            if hasattr(message, "tool_calls") and message.tool_calls:
+                # Return the full message object to preserve tool calls
+                content = message
+            else:
+                # Just text content
+                content = message.content if message.content else ""
 
         return Response(
             content=content,
@@ -163,6 +208,22 @@ class AzureOpenAIProvider(BaseProvider):
             else None,
             raw_response=response,
         )
+
+    def _convert_tools_to_openai_format(self, tools: Tools) -> list:
+        """Convert Tools to OpenAI format."""
+        openai_tools = []
+        for tool in tools.tools:
+            openai_tools.append(
+                {
+                    "type": "function",
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description,
+                        "parameters": tool.input_schema,
+                    },
+                }
+            )
+        return openai_tools
 
     @property
     def name(self) -> str:

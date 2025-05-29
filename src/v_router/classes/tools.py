@@ -1,4 +1,4 @@
-from typing import List
+from typing import Any, Dict, List
 
 from pydantic import BaseModel, Field
 
@@ -10,7 +10,7 @@ class ToolCall(BaseModel):
     description: str = Field(
         ..., description="The description of the function to call."
     )
-    input_schema: BaseModel = Field(
+    input_schema: Dict[str, Any] = Field(
         ..., description="The schema of the input to the function."
     )
 

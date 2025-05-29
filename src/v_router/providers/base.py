@@ -1,21 +1,27 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel
+
+from ..classes.tools import Tools
 
 
 class Message(BaseModel):
     """Unified message format for all providers."""
 
     role: str  # "system", "user", "assistant"
-    content: str
+    content: Union[
+        str, List[Any], Any
+    ]  # Can be string, list of content blocks, or provider-specific format
     name: Optional[str] = None
 
 
 class Response(BaseModel):
     """Unified response format from all providers."""
 
-    content: str
+    content: Union[
+        str, List[Any], Any
+    ]  # Can be string or list of content blocks for tool calls
     model: str
     provider: str
     usage: Optional[Dict[str, Any]] = None
@@ -43,6 +49,7 @@ class BaseProvider(ABC):
         model: str,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
+        tools: Optional[Tools] = None,
         **kwargs,
     ) -> Response:
         """Create a message using the provider's API.
@@ -52,6 +59,7 @@ class BaseProvider(ABC):
             model: Model name to use
             max_tokens: Maximum tokens to generate
             temperature: Temperature for generation
+            tools: Tools/functions that can be called by the model
             **kwargs: Additional provider-specific parameters
 
         Returns:

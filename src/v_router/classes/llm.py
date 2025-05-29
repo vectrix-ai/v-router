@@ -4,6 +4,8 @@ from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
+from .tools import Tools
+
 
 class BackupModel(BaseModel):
     """Configuration for a backup LLM model.
@@ -57,6 +59,10 @@ class LLM(BaseModel):
     try_other_providers: bool = Field(
         False,
         description="Try other providers for this model as backup (if available). Only the exact same model will be used for this.",
+    )
+    tools: Optional[Tools] = Field(
+        None,
+        description="Tools/functions that can be called by the model.",
     )
 
     @field_validator("backup_models")

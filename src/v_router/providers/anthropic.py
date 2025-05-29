@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from anthropic import AsyncAnthropic, AsyncAnthropicVertex
 
+from v_router.classes.tools import Tools
 from v_router.providers.base import BaseProvider, Message, Response
 
 
@@ -27,6 +28,7 @@ class AnthropicProvider(BaseProvider):
         model: str,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
+        tools: Optional[Tools] = None,
         **kwargs,
     ) -> Response:
         """Create a message using Anthropic's API."""
@@ -55,6 +57,10 @@ class AnthropicProvider(BaseProvider):
         if temperature is not None:
             params["temperature"] = temperature
 
+        # Add tools if provided
+        if tools:
+            params["tools"] = self._convert_tools_to_anthropic_format(tools)
+
         # Add any additional kwargs
         params.update(kwargs)
 
@@ -62,13 +68,16 @@ class AnthropicProvider(BaseProvider):
         response = await self.client.messages.create(**params)
 
         # Extract content from response
+        # When tools are used, we need to return the full content including tool calls
         content = ""
         if response.content:
-            content = (
-                response.content[0].text
-                if hasattr(response.content[0], "text")
-                else str(response.content[0])
-            )
+            # If there's only text content, extract it
+            if len(response.content) == 1 and hasattr(response.content[0], "text"):
+                content = response.content[0].text
+            else:
+                # If there are tool calls or multiple content blocks, return the full content
+                # This preserves tool calls for the client to handle
+                content = response.content
 
         return Response(
             content=content,
@@ -84,6 +93,19 @@ class AnthropicProvider(BaseProvider):
             else None,
             raw_response=response,
         )
+
+    def _convert_tools_to_anthropic_format(self, tools: Tools) -> list:
+        """Convert Tools to Anthropic format."""
+        anthropic_tools = []
+        for tool in tools.tools:
+            anthropic_tools.append(
+                {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "input_schema": tool.input_schema,
+                }
+            )
+        return anthropic_tools
 
     @property
     def name(self) -> str:
@@ -124,6 +146,7 @@ class AnthropicVertexProvider(BaseProvider):
         model: str,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
+        tools: Optional[Tools] = None,
         **kwargs,
     ) -> Response:
         """Create a message using Anthropic via Vertex AI."""
@@ -152,6 +175,10 @@ class AnthropicVertexProvider(BaseProvider):
         if temperature is not None:
             params["temperature"] = temperature
 
+        # Add tools if provided
+        if tools:
+            params["tools"] = self._convert_tools_to_anthropic_format(tools)
+
         # Add any additional kwargs
         params.update(kwargs)
 
@@ -159,13 +186,16 @@ class AnthropicVertexProvider(BaseProvider):
         response = await self.client.messages.create(**params)
 
         # Extract content from response
+        # When tools are used, we need to return the full content including tool calls
         content = ""
         if response.content:
-            content = (
-                response.content[0].text
-                if hasattr(response.content[0], "text")
-                else str(response.content[0])
-            )
+            # If there's only text content, extract it
+            if len(response.content) == 1 and hasattr(response.content[0], "text"):
+                content = response.content[0].text
+            else:
+                # If there are tool calls or multiple content blocks, return the full content
+                # This preserves tool calls for the client to handle
+                content = response.content
 
         return Response(
             content=content,
@@ -181,6 +211,19 @@ class AnthropicVertexProvider(BaseProvider):
             else None,
             raw_response=response,
         )
+
+    def _convert_tools_to_anthropic_format(self, tools: Tools) -> list:
+        """Convert Tools to Anthropic format."""
+        anthropic_tools = []
+        for tool in tools.tools:
+            anthropic_tools.append(
+                {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "input_schema": tool.input_schema,
+                }
+            )
+        return anthropic_tools
 
     @property
     def name(self) -> str:

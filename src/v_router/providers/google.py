@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from google import genai
 
+from v_router.classes.tools import Tools
 from v_router.providers.base import BaseProvider, Message, Response
 
 
@@ -27,17 +28,17 @@ class GoogleProvider(BaseProvider):
         model: str,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
+        tools: Optional[Tools] = None,
         **kwargs,
     ) -> Response:
         """Create a message using Google's API."""
         # Convert messages to Google format
-        # Google uses a different format - combine all messages into a single prompt
-        prompt = self._format_messages_as_prompt(messages)
+        contents = self._format_messages_for_google(messages)
 
         # Prepare parameters
         params = {
             "model": self.validate_model_name(model),
-            "contents": prompt,
+            "contents": contents,
         }
 
         # Google uses different parameter names
@@ -47,6 +48,11 @@ class GoogleProvider(BaseProvider):
 
         if temperature is not None:
             config["temperature"] = temperature
+
+        # Add tools if provided
+        if tools:
+            google_tools = self._convert_tools_to_google_format(tools)
+            config["tools"] = google_tools
 
         if config:
             params["config"] = genai.types.GenerateContentConfig(**config)
@@ -64,7 +70,16 @@ class GoogleProvider(BaseProvider):
         # Extract content from response
         content = ""
         if response.candidates and response.candidates[0].content.parts:
-            content = response.candidates[0].content.parts[0].text
+            parts = response.candidates[0].content.parts
+            # Check if there are function calls
+            if any(
+                hasattr(part, "function_call") and part.function_call for part in parts
+            ):
+                # Return the full parts list to preserve function calls
+                content = parts
+            else:
+                # Just text content
+                content = parts[0].text if parts[0].text else ""
 
         return Response(
             content=content,
@@ -80,18 +95,45 @@ class GoogleProvider(BaseProvider):
             raw_response=response,
         )
 
-    def _format_messages_as_prompt(self, messages: List[Message]) -> str:
-        """Format messages into a single prompt for Google."""
-        formatted_parts = []
+    def _format_messages_for_google(self, messages: List[Message]) -> List:
+        """Format messages for Google API."""
+        contents = []
         for msg in messages:
             if msg.role == "system":
-                formatted_parts.append(f"System: {msg.content}")
+                # Google doesn't have a separate system role, so we'll include it as user content
+                contents.append(
+                    genai.types.Content(
+                        role="user",
+                        parts=[genai.types.Part(text=f"System: {msg.content}")],
+                    )
+                )
             elif msg.role == "user":
-                formatted_parts.append(f"User: {msg.content}")
+                contents.append(
+                    genai.types.Content(
+                        role="user", parts=[genai.types.Part(text=msg.content)]
+                    )
+                )
             elif msg.role == "assistant":
-                formatted_parts.append(f"Assistant: {msg.content}")
+                contents.append(
+                    genai.types.Content(
+                        role="model",  # Google uses "model" instead of "assistant"
+                        parts=[genai.types.Part(text=msg.content)],
+                    )
+                )
+        return contents
 
-        return "\n\n".join(formatted_parts)
+    def _convert_tools_to_google_format(self, tools: Tools) -> List:
+        """Convert Tools to Google format."""
+        google_tools = []
+        for tool in tools.tools:
+            google_tools.append(
+                {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "parameters": tool.input_schema,
+                }
+            )
+        return [genai.types.Tool(function_declarations=google_tools)]
 
     @property
     def name(self) -> str:
@@ -132,16 +174,17 @@ class GoogleVertexProvider(BaseProvider):
         model: str,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
+        tools: Optional[Tools] = None,
         **kwargs,
     ) -> Response:
         """Create a message using Google Vertex AI."""
         # Convert messages to Google format
-        prompt = self._format_messages_as_prompt(messages)
+        contents = self._format_messages_for_google(messages)
 
         # Prepare parameters
         params = {
             "model": self.validate_model_name(model),
-            "contents": prompt,
+            "contents": contents,
         }
 
         # Google uses different parameter names
@@ -151,6 +194,11 @@ class GoogleVertexProvider(BaseProvider):
 
         if temperature is not None:
             config["temperature"] = temperature
+
+        # Add tools if provided
+        if tools:
+            google_tools = self._convert_tools_to_google_format(tools)
+            config["tools"] = google_tools
 
         if config:
             params["config"] = genai.types.GenerateContentConfig(**config)
@@ -168,7 +216,16 @@ class GoogleVertexProvider(BaseProvider):
         # Extract content from response
         content = ""
         if response.candidates and response.candidates[0].content.parts:
-            content = response.candidates[0].content.parts[0].text
+            parts = response.candidates[0].content.parts
+            # Check if there are function calls
+            if any(
+                hasattr(part, "function_call") and part.function_call for part in parts
+            ):
+                # Return the full parts list to preserve function calls
+                content = parts
+            else:
+                # Just text content
+                content = parts[0].text if parts[0].text else ""
 
         return Response(
             content=content,
@@ -184,18 +241,45 @@ class GoogleVertexProvider(BaseProvider):
             raw_response=response,
         )
 
-    def _format_messages_as_prompt(self, messages: List[Message]) -> str:
-        """Format messages into a single prompt for Google."""
-        formatted_parts = []
+    def _format_messages_for_google(self, messages: List[Message]) -> List:
+        """Format messages for Google API."""
+        contents = []
         for msg in messages:
             if msg.role == "system":
-                formatted_parts.append(f"System: {msg.content}")
+                # Google doesn't have a separate system role, so we'll include it as user content
+                contents.append(
+                    genai.types.Content(
+                        role="user",
+                        parts=[genai.types.Part(text=f"System: {msg.content}")],
+                    )
+                )
             elif msg.role == "user":
-                formatted_parts.append(f"User: {msg.content}")
+                contents.append(
+                    genai.types.Content(
+                        role="user", parts=[genai.types.Part(text=msg.content)]
+                    )
+                )
             elif msg.role == "assistant":
-                formatted_parts.append(f"Assistant: {msg.content}")
+                contents.append(
+                    genai.types.Content(
+                        role="model",  # Google uses "model" instead of "assistant"
+                        parts=[genai.types.Part(text=msg.content)],
+                    )
+                )
+        return contents
 
-        return "\n\n".join(formatted_parts)
+    def _convert_tools_to_google_format(self, tools: Tools) -> List:
+        """Convert Tools to Google format."""
+        google_tools = []
+        for tool in tools.tools:
+            google_tools.append(
+                {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "parameters": tool.input_schema,
+                }
+            )
+        return [genai.types.Tool(function_declarations=google_tools)]
 
     @property
     def name(self) -> str:

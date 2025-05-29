@@ -170,7 +170,15 @@ class Router:
                 logger.info(
                     f"Trying backup model: {backup_model.model_name} on {backup_model.provider}"
                 )
-                return await self._try_provider(backup_model, messages, **kwargs)
+                # If backup model doesn't have tools but primary does, inherit them
+                if backup_model.tools is None and self.primary_config.tools is not None:
+                    backup_model_with_tools = backup_model.model_copy()
+                    backup_model_with_tools.tools = self.primary_config.tools
+                    return await self._try_provider(
+                        backup_model_with_tools, messages, **kwargs
+                    )
+                else:
+                    return await self._try_provider(backup_model, messages, **kwargs)
             except Exception as e:
                 logger.warning(f"Backup model failed: {str(e)}")
                 errors.append(f"Backup ({backup_model.provider}): {str(e)}")
@@ -191,6 +199,7 @@ class Router:
                         provider=alt_provider,
                         max_tokens=self.primary_config.max_tokens,
                         temperature=self.primary_config.temperature,
+                        tools=self.primary_config.tools,
                     )
                     return await self._try_provider(alt_config, messages, **kwargs)
                 except Exception as e:
@@ -222,6 +231,7 @@ class Router:
             "model": llm_config.model_name,
             "max_tokens": llm_config.max_tokens,
             "temperature": llm_config.temperature,
+            "tools": llm_config.tools,
             **kwargs,
         }
 
