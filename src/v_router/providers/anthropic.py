@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from anthropic import AsyncAnthropic, AsyncAnthropicVertex
 
-from .base import BaseProvider, Message, Response
+from v_router.providers.base import BaseProvider, Message, Response
 
 
 class AnthropicProvider(BaseProvider):

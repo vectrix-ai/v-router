@@ -88,3 +88,7 @@ When adding a new provider:
 3. Implement `create_message()` and `name` property
 4. Add to `PROVIDER_REGISTRY` in `router.py`
 5. Update `models.yml` with supported models
+
+## Development Guidelines
+
+- Don't use relative imports unless absolutely needed, try to use absolute ones

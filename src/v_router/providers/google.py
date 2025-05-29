@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from google import genai
 
-from .base import BaseProvider, Message, Response
+from v_router.providers.base import BaseProvider, Message, Response
 
 
 class GoogleProvider(BaseProvider):

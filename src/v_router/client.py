@@ -1,8 +1,8 @@
 from typing import Dict, List
 
-from .classes.llm import LLM
-from .providers.base import Message, Response
-from .router import Router
+from v_router.classes.llm import LLM
+from v_router.providers.base import Message, Response
+from v_router.router import Router
 
 
 class Messages:

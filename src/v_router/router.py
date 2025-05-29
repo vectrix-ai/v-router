@@ -3,12 +3,12 @@ from typing import Dict, List, Type
 
 import yaml
 
-from .classes.llm import LLM
-from .logger import setup_logger
-from .providers.anthropic import AnthropicProvider, AnthropicVertexProvider
-from .providers.base import BaseProvider, Message, Response
-from .providers.google import GoogleProvider, GoogleVertexProvider
-from .providers.openai import AzureOpenAIProvider, OpenAIProvider
+from v_router.classes.llm import LLM
+from v_router.logger import setup_logger
+from v_router.providers.anthropic import AnthropicProvider, AnthropicVertexProvider
+from v_router.providers.base import BaseProvider, Message, Response
+from v_router.providers.google import GoogleProvider, GoogleVertexProvider
+from v_router.providers.openai import AzureOpenAIProvider, OpenAIProvider
 
 logger = setup_logger(__name__)
 
