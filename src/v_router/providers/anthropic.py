@@ -3,8 +3,10 @@ from typing import List, Optional
 
 from anthropic import AsyncAnthropic, AsyncAnthropicVertex
 
+from v_router.classes.message import Message
+from v_router.classes.response import Content, Response, ToolUse, Usage
 from v_router.classes.tools import Tools
-from v_router.providers.base import BaseProvider, Message, Response
+from v_router.providers.base import BaseProvider
 
 
 class AnthropicProvider(BaseProvider):
@@ -68,30 +70,60 @@ class AnthropicProvider(BaseProvider):
         response = await self.client.messages.create(**params)
 
         # Extract content from response
-        # When tools are used, we need to return the full content including tool calls
-        content = ""
-        if response.content:
-            # If there's only text content, extract it
-            if len(response.content) == 1 and hasattr(response.content[0], "text"):
-                content = response.content[0].text
-            else:
-                # If there are tool calls or multiple content blocks, return the full content
-                # This preserves tool calls for the client to handle
-                content = response.content
+        content_list = []
+        tool_use_list = []
 
-        return Response(
-            content=content,
-            model=response.model,
-            provider=self.name,
-            usage={
-                "input_tokens": response.usage.input_tokens,
-                "output_tokens": response.usage.output_tokens,
-                "total_tokens": response.usage.input_tokens
-                + response.usage.output_tokens,
-            }
+        if response.content:
+            for content_block in response.content:
+                if hasattr(content_block, "text"):
+                    # Text content
+                    content_list.append(
+                        Content(type="text", role="assistant", text=content_block.text)
+                    )
+                elif (
+                    hasattr(content_block, "type") and content_block.type == "tool_use"
+                ):
+                    # Tool use content
+                    tool_use_list.append(
+                        ToolUse(
+                            id=content_block.id,
+                            name=content_block.name,
+                            arguments=content_block.input,
+                        )
+                    )
+
+        # Build usage object
+        usage = Usage(
+            input_tokens=response.usage.input_tokens
             if hasattr(response, "usage")
             else None,
-            raw_response=response,
+            output_tokens=response.usage.output_tokens
+            if hasattr(response, "usage")
+            else None,
+        )
+
+        # Safely get raw response
+        try:
+            if hasattr(response, "model_dump"):
+                raw_response = response.model_dump()
+                if not isinstance(raw_response, dict):
+                    raw_response = {}
+            elif hasattr(response, "dict"):
+                raw_response = response.dict()
+                if not isinstance(raw_response, dict):
+                    raw_response = {}
+            else:
+                raw_response = {}
+        except Exception:
+            raw_response = {}
+
+        return Response(
+            content=content_list,
+            tool_use=tool_use_list,
+            model=response.model,
+            provider=self.name,
+            usage=usage,
+            raw_response=raw_response,
         )
 
     def _convert_tools_to_anthropic_format(self, tools: Tools) -> list:
@@ -186,30 +218,60 @@ class AnthropicVertexProvider(BaseProvider):
         response = await self.client.messages.create(**params)
 
         # Extract content from response
-        # When tools are used, we need to return the full content including tool calls
-        content = ""
-        if response.content:
-            # If there's only text content, extract it
-            if len(response.content) == 1 and hasattr(response.content[0], "text"):
-                content = response.content[0].text
-            else:
-                # If there are tool calls or multiple content blocks, return the full content
-                # This preserves tool calls for the client to handle
-                content = response.content
+        content_list = []
+        tool_use_list = []
 
-        return Response(
-            content=content,
-            model=response.model,
-            provider=self.name,
-            usage={
-                "input_tokens": response.usage.input_tokens,
-                "output_tokens": response.usage.output_tokens,
-                "total_tokens": response.usage.input_tokens
-                + response.usage.output_tokens,
-            }
+        if response.content:
+            for content_block in response.content:
+                if hasattr(content_block, "text"):
+                    # Text content
+                    content_list.append(
+                        Content(type="text", role="assistant", text=content_block.text)
+                    )
+                elif (
+                    hasattr(content_block, "type") and content_block.type == "tool_use"
+                ):
+                    # Tool use content
+                    tool_use_list.append(
+                        ToolUse(
+                            id=content_block.id,
+                            name=content_block.name,
+                            arguments=content_block.input,
+                        )
+                    )
+
+        # Build usage object
+        usage = Usage(
+            input_tokens=response.usage.input_tokens
             if hasattr(response, "usage")
             else None,
-            raw_response=response,
+            output_tokens=response.usage.output_tokens
+            if hasattr(response, "usage")
+            else None,
+        )
+
+        # Safely get raw response
+        try:
+            if hasattr(response, "model_dump"):
+                raw_response = response.model_dump()
+                if not isinstance(raw_response, dict):
+                    raw_response = {}
+            elif hasattr(response, "dict"):
+                raw_response = response.dict()
+                if not isinstance(raw_response, dict):
+                    raw_response = {}
+            else:
+                raw_response = {}
+        except Exception:
+            raw_response = {}
+
+        return Response(
+            content=content_list,
+            tool_use=tool_use_list,
+            model=response.model,
+            provider=self.name,
+            usage=usage,
+            raw_response=raw_response,
         )
 
     def _convert_tools_to_anthropic_format(self, tools: Tools) -> list:

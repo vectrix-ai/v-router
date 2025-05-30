@@ -3,8 +3,10 @@ from typing import List, Optional
 
 from google import genai
 
+from v_router.classes.message import Message
+from v_router.classes.response import Content, Response, ToolUse, Usage
 from v_router.classes.tools import Tools
-from v_router.providers.base import BaseProvider, Message, Response
+from v_router.providers.base import BaseProvider
 
 
 class GoogleProvider(BaseProvider):
@@ -68,31 +70,60 @@ class GoogleProvider(BaseProvider):
         )
 
         # Extract content from response
-        content = ""
+        content_list = []
+        tool_use_list = []
+
         if response.candidates and response.candidates[0].content.parts:
             parts = response.candidates[0].content.parts
-            # Check if there are function calls
-            if any(
-                hasattr(part, "function_call") and part.function_call for part in parts
-            ):
-                # Return the full parts list to preserve function calls
-                content = parts
-            else:
-                # Just text content
-                content = parts[0].text if parts[0].text else ""
 
-        return Response(
-            content=content,
-            model=model,
-            provider=self.name,
-            usage={
-                "input_tokens": response.usage_metadata.prompt_token_count,
-                "output_tokens": response.usage_metadata.candidates_token_count,
-                "total_tokens": response.usage_metadata.total_token_count,
-            }
+            for part in parts:
+                if hasattr(part, "text") and part.text:
+                    # Text content
+                    content_list.append(
+                        Content(type="text", role="assistant", text=part.text)
+                    )
+                elif hasattr(part, "function_call") and part.function_call:
+                    # Function call
+                    tool_use_list.append(
+                        ToolUse(
+                            id=f"google_{part.function_call.name}_{id(part)}",  # Google doesn't provide IDs
+                            name=part.function_call.name,
+                            arguments=dict(part.function_call.args),
+                        )
+                    )
+
+        # Build usage object
+        usage = Usage(
+            input_tokens=response.usage_metadata.prompt_token_count
             if hasattr(response, "usage_metadata")
             else None,
-            raw_response=response,
+            output_tokens=response.usage_metadata.candidates_token_count
+            if hasattr(response, "usage_metadata")
+            else None,
+        )
+
+        # Safely get raw response
+        try:
+            if hasattr(response, "model_dump"):
+                raw_response = response.model_dump()
+                if not isinstance(raw_response, dict):
+                    raw_response = {}
+            elif hasattr(response, "dict"):
+                raw_response = response.dict()
+                if not isinstance(raw_response, dict):
+                    raw_response = {}
+            else:
+                raw_response = {}
+        except Exception:
+            raw_response = {}
+
+        return Response(
+            content=content_list,
+            tool_use=tool_use_list,
+            model=model,
+            provider=self.name,
+            usage=usage,
+            raw_response=raw_response,
         )
 
     def _format_messages_for_google(self, messages: List[Message]) -> List:
@@ -214,31 +245,60 @@ class GoogleVertexProvider(BaseProvider):
         )
 
         # Extract content from response
-        content = ""
+        content_list = []
+        tool_use_list = []
+
         if response.candidates and response.candidates[0].content.parts:
             parts = response.candidates[0].content.parts
-            # Check if there are function calls
-            if any(
-                hasattr(part, "function_call") and part.function_call for part in parts
-            ):
-                # Return the full parts list to preserve function calls
-                content = parts
-            else:
-                # Just text content
-                content = parts[0].text if parts[0].text else ""
 
-        return Response(
-            content=content,
-            model=model,
-            provider=self.name,
-            usage={
-                "input_tokens": response.usage_metadata.prompt_token_count,
-                "output_tokens": response.usage_metadata.candidates_token_count,
-                "total_tokens": response.usage_metadata.total_token_count,
-            }
+            for part in parts:
+                if hasattr(part, "text") and part.text:
+                    # Text content
+                    content_list.append(
+                        Content(type="text", role="assistant", text=part.text)
+                    )
+                elif hasattr(part, "function_call") and part.function_call:
+                    # Function call
+                    tool_use_list.append(
+                        ToolUse(
+                            id=f"google_{part.function_call.name}_{id(part)}",  # Google doesn't provide IDs
+                            name=part.function_call.name,
+                            arguments=dict(part.function_call.args),
+                        )
+                    )
+
+        # Build usage object
+        usage = Usage(
+            input_tokens=response.usage_metadata.prompt_token_count
             if hasattr(response, "usage_metadata")
             else None,
-            raw_response=response,
+            output_tokens=response.usage_metadata.candidates_token_count
+            if hasattr(response, "usage_metadata")
+            else None,
+        )
+
+        # Safely get raw response
+        try:
+            if hasattr(response, "model_dump"):
+                raw_response = response.model_dump()
+                if not isinstance(raw_response, dict):
+                    raw_response = {}
+            elif hasattr(response, "dict"):
+                raw_response = response.dict()
+                if not isinstance(raw_response, dict):
+                    raw_response = {}
+            else:
+                raw_response = {}
+        except Exception:
+            raw_response = {}
+
+        return Response(
+            content=content_list,
+            tool_use=tool_use_list,
+            model=model,
+            provider=self.name,
+            usage=usage,
+            raw_response=raw_response,
         )
 
     def _format_messages_for_google(self, messages: List[Message]) -> List:

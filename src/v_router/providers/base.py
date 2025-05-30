@@ -1,31 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Union
+from typing import List, Optional
 
-from pydantic import BaseModel
-
-from ..classes.tools import Tools
-
-
-class Message(BaseModel):
-    """Unified message format for all providers."""
-
-    role: str  # "system", "user", "assistant"
-    content: Union[
-        str, List[Any], Any
-    ]  # Can be string, list of content blocks, or provider-specific format
-    name: Optional[str] = None
-
-
-class Response(BaseModel):
-    """Unified response format from all providers."""
-
-    content: Union[
-        str, List[Any], Any
-    ]  # Can be string or list of content blocks for tool calls
-    model: str
-    provider: str
-    usage: Optional[Dict[str, Any]] = None
-    raw_response: Optional[Any] = None  # Original provider response
+from v_router.classes.message import Message
+from v_router.classes.response import Response
+from v_router.classes.tools import Tools
 
 
 class BaseProvider(ABC):

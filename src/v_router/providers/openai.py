@@ -1,10 +1,13 @@
+import json
 import os
 from typing import List, Optional
 
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 
+from v_router.classes.message import Message
+from v_router.classes.response import Content, Response, ToolUse, Usage
 from v_router.classes.tools import Tools
-from v_router.providers.base import BaseProvider, Message, Response
+from v_router.providers.base import BaseProvider
 
 
 class OpenAIProvider(BaseProvider):
@@ -60,29 +63,64 @@ class OpenAIProvider(BaseProvider):
         response = await self.client.chat.completions.create(**params)
 
         # Extract content from response
-        content = ""
+        content_list = []
+        tool_use_list = []
+
         if response.choices and response.choices[0].message:
             message = response.choices[0].message
+
+            # Add text content if present
+            if message.content:
+                content_list.append(
+                    Content(type="text", role="assistant", text=message.content)
+                )
+
             # Check if there are tool calls
             if hasattr(message, "tool_calls") and message.tool_calls:
-                # Return the full message object to preserve tool calls
-                content = message
-            else:
-                # Just text content
-                content = message.content if message.content else ""
+                for tool_call in message.tool_calls:
+                    if tool_call.function:
+                        tool_use_list.append(
+                            ToolUse(
+                                id=tool_call.id,
+                                name=tool_call.function.name,
+                                arguments=json.loads(
+                                    tool_call.function.arguments
+                                ),  # OpenAI returns as JSON string
+                            )
+                        )
 
-        return Response(
-            content=content,
-            model=response.model,
-            provider=self.name,
-            usage={
-                "input_tokens": response.usage.prompt_tokens,
-                "output_tokens": response.usage.completion_tokens,
-                "total_tokens": response.usage.total_tokens,
-            }
+        # Build usage object
+        usage = Usage(
+            input_tokens=response.usage.prompt_tokens
             if hasattr(response, "usage")
             else None,
-            raw_response=response,
+            output_tokens=response.usage.completion_tokens
+            if hasattr(response, "usage")
+            else None,
+        )
+
+        # Safely get raw response
+        try:
+            if hasattr(response, "model_dump"):
+                raw_response = response.model_dump()
+                if not isinstance(raw_response, dict):
+                    raw_response = {}
+            elif hasattr(response, "dict"):
+                raw_response = response.dict()
+                if not isinstance(raw_response, dict):
+                    raw_response = {}
+            else:
+                raw_response = {}
+        except Exception:
+            raw_response = {}
+
+        return Response(
+            content=content_list,
+            tool_use=tool_use_list,
+            model=response.model,
+            provider=self.name,
+            usage=usage,
+            raw_response=raw_response,
         )
 
     def _convert_tools_to_openai_format(self, tools: Tools) -> list:
@@ -184,29 +222,64 @@ class AzureOpenAIProvider(BaseProvider):
         response = await self.client.chat.completions.create(**params)
 
         # Extract content from response
-        content = ""
+        content_list = []
+        tool_use_list = []
+
         if response.choices and response.choices[0].message:
             message = response.choices[0].message
+
+            # Add text content if present
+            if message.content:
+                content_list.append(
+                    Content(type="text", role="assistant", text=message.content)
+                )
+
             # Check if there are tool calls
             if hasattr(message, "tool_calls") and message.tool_calls:
-                # Return the full message object to preserve tool calls
-                content = message
-            else:
-                # Just text content
-                content = message.content if message.content else ""
+                for tool_call in message.tool_calls:
+                    if tool_call.function:
+                        tool_use_list.append(
+                            ToolUse(
+                                id=tool_call.id,
+                                name=tool_call.function.name,
+                                arguments=json.loads(
+                                    tool_call.function.arguments
+                                ),  # OpenAI returns as JSON string
+                            )
+                        )
 
-        return Response(
-            content=content,
-            model=response.model,
-            provider=self.name,
-            usage={
-                "input_tokens": response.usage.prompt_tokens,
-                "output_tokens": response.usage.completion_tokens,
-                "total_tokens": response.usage.total_tokens,
-            }
+        # Build usage object
+        usage = Usage(
+            input_tokens=response.usage.prompt_tokens
             if hasattr(response, "usage")
             else None,
-            raw_response=response,
+            output_tokens=response.usage.completion_tokens
+            if hasattr(response, "usage")
+            else None,
+        )
+
+        # Safely get raw response
+        try:
+            if hasattr(response, "model_dump"):
+                raw_response = response.model_dump()
+                if not isinstance(raw_response, dict):
+                    raw_response = {}
+            elif hasattr(response, "dict"):
+                raw_response = response.dict()
+                if not isinstance(raw_response, dict):
+                    raw_response = {}
+            else:
+                raw_response = {}
+        except Exception:
+            raw_response = {}
+
+        return Response(
+            content=content_list,
+            tool_use=tool_use_list,
+            model=response.model,
+            provider=self.name,
+            usage=usage,
+            raw_response=raw_response,
         )
 
     def _convert_tools_to_openai_format(self, tools: Tools) -> list:
