@@ -41,9 +41,22 @@ class AnthropicProvider(BaseProvider):
         for msg in messages:
             if msg.role == "system":
                 # Anthropic expects system as a separate parameter
-                system_message = msg.content
+                system_message = msg.get_text_content()
             else:
-                anthropic_messages.append({"role": msg.role, "content": msg.content})
+                # Convert message content to Anthropic format
+                if isinstance(msg.content, str):
+                    # Simple string content
+                    anthropic_messages.append(
+                        {"role": msg.role, "content": msg.content}
+                    )
+                else:
+                    # Multimodal content
+                    anthropic_content = self._convert_content_to_anthropic_format(
+                        msg.content
+                    )
+                    anthropic_messages.append(
+                        {"role": msg.role, "content": anthropic_content}
+                    )
 
         # Prepare parameters
         params = {
@@ -138,6 +151,46 @@ class AnthropicProvider(BaseProvider):
                 }
             )
         return anthropic_tools
+
+    def _convert_content_to_anthropic_format(self, content):
+        """Convert message content to Anthropic format."""
+        # Handle string content (backward compatibility)
+        if isinstance(content, str):
+            return content
+
+        # Handle list of content items
+        if isinstance(content, list):
+            anthropic_content = []
+            for item in content:
+                if hasattr(item, "type"):
+                    if item.type == "text":
+                        anthropic_content.append({"type": "text", "text": item.text})
+                    elif item.type == "image":
+                        anthropic_content.append(
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": item.media_type,
+                                    "data": item.data,
+                                },
+                            }
+                        )
+                    elif item.type == "document":
+                        anthropic_content.append(
+                            {
+                                "type": "document",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": item.media_type,
+                                    "data": item.data,
+                                },
+                            }
+                        )
+            return anthropic_content
+
+        # Fallback to string representation
+        return str(content)
 
     @property
     def name(self) -> str:
@@ -189,9 +242,22 @@ class AnthropicVertexProvider(BaseProvider):
         for msg in messages:
             if msg.role == "system":
                 # Anthropic expects system as a separate parameter
-                system_message = msg.content
+                system_message = msg.get_text_content()
             else:
-                anthropic_messages.append({"role": msg.role, "content": msg.content})
+                # Convert message content to Anthropic format
+                if isinstance(msg.content, str):
+                    # Simple string content
+                    anthropic_messages.append(
+                        {"role": msg.role, "content": msg.content}
+                    )
+                else:
+                    # Multimodal content
+                    anthropic_content = self._convert_content_to_anthropic_format(
+                        msg.content
+                    )
+                    anthropic_messages.append(
+                        {"role": msg.role, "content": anthropic_content}
+                    )
 
         # Prepare parameters
         params = {
@@ -286,6 +352,46 @@ class AnthropicVertexProvider(BaseProvider):
                 }
             )
         return anthropic_tools
+
+    def _convert_content_to_anthropic_format(self, content):
+        """Convert message content to Anthropic format."""
+        # Handle string content (backward compatibility)
+        if isinstance(content, str):
+            return content
+
+        # Handle list of content items
+        if isinstance(content, list):
+            anthropic_content = []
+            for item in content:
+                if hasattr(item, "type"):
+                    if item.type == "text":
+                        anthropic_content.append({"type": "text", "text": item.text})
+                    elif item.type == "image":
+                        anthropic_content.append(
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": item.media_type,
+                                    "data": item.data,
+                                },
+                            }
+                        )
+                    elif item.type == "document":
+                        anthropic_content.append(
+                            {
+                                "type": "document",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": item.media_type,
+                                    "data": item.data,
+                                },
+                            }
+                        )
+            return anthropic_content
+
+        # Fallback to string representation
+        return str(content)
 
     @property
     def name(self) -> str:

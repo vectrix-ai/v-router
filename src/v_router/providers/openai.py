@@ -36,9 +36,15 @@ class OpenAIProvider(BaseProvider):
     ) -> Response:
         """Create a message using OpenAI's API."""
         # Convert messages to OpenAI format
-        openai_messages = [
-            {"role": msg.role, "content": msg.content} for msg in messages
-        ]
+        openai_messages = []
+        for msg in messages:
+            if isinstance(msg.content, str):
+                # Simple string content
+                openai_messages.append({"role": msg.role, "content": msg.content})
+            else:
+                # Multimodal content
+                openai_content = self._convert_content_to_openai_format(msg.content)
+                openai_messages.append({"role": msg.role, "content": openai_content})
 
         # Prepare parameters
         params = {
@@ -139,6 +145,42 @@ class OpenAIProvider(BaseProvider):
             )
         return openai_tools
 
+    def _convert_content_to_openai_format(self, content):
+        """Convert message content to OpenAI format."""
+        # Handle string content (backward compatibility)
+        if isinstance(content, str):
+            return content
+
+        # Handle list of content items
+        if isinstance(content, list):
+            openai_content = []
+            for item in content:
+                if hasattr(item, "type"):
+                    if item.type == "text":
+                        openai_content.append({"type": "text", "text": item.text})
+                    elif item.type == "image":
+                        # OpenAI expects base64 images with data URI scheme
+                        openai_content.append(
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:{item.media_type};base64,{item.data}"
+                                },
+                            }
+                        )
+                    elif item.type == "document":
+                        # OpenAI doesn't natively support PDFs, so we'll add a text note
+                        openai_content.append(
+                            {
+                                "type": "text",
+                                "text": "[PDF document provided - OpenAI does not support PDF viewing]",
+                            }
+                        )
+            return openai_content
+
+        # Fallback to string representation
+        return str(content)
+
     @property
     def name(self) -> str:
         """Return the provider name."""
@@ -195,9 +237,15 @@ class AzureOpenAIProvider(BaseProvider):
         not the actual model name.
         """
         # Convert messages to OpenAI format
-        openai_messages = [
-            {"role": msg.role, "content": msg.content} for msg in messages
-        ]
+        openai_messages = []
+        for msg in messages:
+            if isinstance(msg.content, str):
+                # Simple string content
+                openai_messages.append({"role": msg.role, "content": msg.content})
+            else:
+                # Multimodal content
+                openai_content = self._convert_content_to_openai_format(msg.content)
+                openai_messages.append({"role": msg.role, "content": openai_content})
 
         # Prepare parameters
         params = {
@@ -297,6 +345,42 @@ class AzureOpenAIProvider(BaseProvider):
                 }
             )
         return openai_tools
+
+    def _convert_content_to_openai_format(self, content):
+        """Convert message content to OpenAI format."""
+        # Handle string content (backward compatibility)
+        if isinstance(content, str):
+            return content
+
+        # Handle list of content items
+        if isinstance(content, list):
+            openai_content = []
+            for item in content:
+                if hasattr(item, "type"):
+                    if item.type == "text":
+                        openai_content.append({"type": "text", "text": item.text})
+                    elif item.type == "image":
+                        # OpenAI expects base64 images with data URI scheme
+                        openai_content.append(
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:{item.media_type};base64,{item.data}"
+                                },
+                            }
+                        )
+                    elif item.type == "document":
+                        # OpenAI doesn't natively support PDFs, so we'll add a text note
+                        openai_content.append(
+                            {
+                                "type": "text",
+                                "text": "[PDF document provided - OpenAI does not support PDF viewing]",
+                            }
+                        )
+            return openai_content
+
+        # Fallback to string representation
+        return str(content)
 
     @property
     def name(self) -> str:

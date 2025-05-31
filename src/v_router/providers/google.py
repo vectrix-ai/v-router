@@ -1,3 +1,4 @@
+import base64
 import os
 from typing import List, Optional
 
@@ -135,22 +136,37 @@ class GoogleProvider(BaseProvider):
                 contents.append(
                     genai.types.Content(
                         role="user",
-                        parts=[genai.types.Part(text=f"System: {msg.content}")],
+                        parts=[
+                            genai.types.Part(text=f"System: {msg.get_text_content()}")
+                        ],
                     )
                 )
             elif msg.role == "user":
-                contents.append(
-                    genai.types.Content(
-                        role="user", parts=[genai.types.Part(text=msg.content)]
+                if isinstance(msg.content, str):
+                    contents.append(
+                        genai.types.Content(
+                            role="user", parts=[genai.types.Part(text=msg.content)]
+                        )
                     )
-                )
+                else:
+                    parts = self._convert_content_to_google_parts(msg.content)
+                    contents.append(genai.types.Content(role="user", parts=parts))
             elif msg.role == "assistant":
-                contents.append(
-                    genai.types.Content(
-                        role="model",  # Google uses "model" instead of "assistant"
-                        parts=[genai.types.Part(text=msg.content)],
+                if isinstance(msg.content, str):
+                    contents.append(
+                        genai.types.Content(
+                            role="model",  # Google uses "model" instead of "assistant"
+                            parts=[genai.types.Part(text=msg.content)],
+                        )
                     )
-                )
+                else:
+                    parts = self._convert_content_to_google_parts(msg.content)
+                    contents.append(
+                        genai.types.Content(
+                            role="model",  # Google uses "model" instead of "assistant"
+                            parts=parts,
+                        )
+                    )
         return contents
 
     def _convert_tools_to_google_format(self, tools: Tools) -> List:
@@ -165,6 +181,44 @@ class GoogleProvider(BaseProvider):
                 }
             )
         return [genai.types.Tool(function_declarations=google_tools)]
+
+    def _convert_content_to_google_parts(self, content) -> List:
+        """Convert message content to Google Part format."""
+        # Handle string content (backward compatibility)
+        if isinstance(content, str):
+            return [genai.types.Part(text=content)]
+
+        # Handle list of content items
+        if isinstance(content, list):
+            parts = []
+            for item in content:
+                if hasattr(item, "type"):
+                    if item.type == "text":
+                        parts.append(genai.types.Part(text=item.text))
+                    elif item.type == "image":
+                        # Decode base64 string to bytes
+                        parts.append(
+                            genai.types.Part(
+                                inline_data=genai.types.Blob(
+                                    mime_type=item.media_type,
+                                    data=base64.b64decode(item.data),
+                                )
+                            )
+                        )
+                    elif item.type == "document":
+                        # Google Gemini supports PDF files through inline_data
+                        parts.append(
+                            genai.types.Part(
+                                inline_data=genai.types.Blob(
+                                    mime_type=item.media_type,
+                                    data=base64.b64decode(item.data),
+                                )
+                            )
+                        )
+            return parts
+
+        # Fallback to text
+        return [genai.types.Part(text=str(content))]
 
     @property
     def name(self) -> str:
@@ -310,22 +364,37 @@ class GoogleVertexProvider(BaseProvider):
                 contents.append(
                     genai.types.Content(
                         role="user",
-                        parts=[genai.types.Part(text=f"System: {msg.content}")],
+                        parts=[
+                            genai.types.Part(text=f"System: {msg.get_text_content()}")
+                        ],
                     )
                 )
             elif msg.role == "user":
-                contents.append(
-                    genai.types.Content(
-                        role="user", parts=[genai.types.Part(text=msg.content)]
+                if isinstance(msg.content, str):
+                    contents.append(
+                        genai.types.Content(
+                            role="user", parts=[genai.types.Part(text=msg.content)]
+                        )
                     )
-                )
+                else:
+                    parts = self._convert_content_to_google_parts(msg.content)
+                    contents.append(genai.types.Content(role="user", parts=parts))
             elif msg.role == "assistant":
-                contents.append(
-                    genai.types.Content(
-                        role="model",  # Google uses "model" instead of "assistant"
-                        parts=[genai.types.Part(text=msg.content)],
+                if isinstance(msg.content, str):
+                    contents.append(
+                        genai.types.Content(
+                            role="model",  # Google uses "model" instead of "assistant"
+                            parts=[genai.types.Part(text=msg.content)],
+                        )
                     )
-                )
+                else:
+                    parts = self._convert_content_to_google_parts(msg.content)
+                    contents.append(
+                        genai.types.Content(
+                            role="model",  # Google uses "model" instead of "assistant"
+                            parts=parts,
+                        )
+                    )
         return contents
 
     def _convert_tools_to_google_format(self, tools: Tools) -> List:
@@ -340,6 +409,44 @@ class GoogleVertexProvider(BaseProvider):
                 }
             )
         return [genai.types.Tool(function_declarations=google_tools)]
+
+    def _convert_content_to_google_parts(self, content) -> List:
+        """Convert message content to Google Part format."""
+        # Handle string content (backward compatibility)
+        if isinstance(content, str):
+            return [genai.types.Part(text=content)]
+
+        # Handle list of content items
+        if isinstance(content, list):
+            parts = []
+            for item in content:
+                if hasattr(item, "type"):
+                    if item.type == "text":
+                        parts.append(genai.types.Part(text=item.text))
+                    elif item.type == "image":
+                        # Decode base64 string to bytes
+                        parts.append(
+                            genai.types.Part(
+                                inline_data=genai.types.Blob(
+                                    mime_type=item.media_type,
+                                    data=base64.b64decode(item.data),
+                                )
+                            )
+                        )
+                    elif item.type == "document":
+                        # Google Gemini supports PDF files through inline_data
+                        parts.append(
+                            genai.types.Part(
+                                inline_data=genai.types.Blob(
+                                    mime_type=item.media_type,
+                                    data=base64.b64decode(item.data),
+                                )
+                            )
+                        )
+            return parts
+
+        # Fallback to text
+        return [genai.types.Part(text=str(content))]
 
     @property
     def name(self) -> str:
