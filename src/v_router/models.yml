@@ -1,0 +1,178 @@
+# Model configuration for v-router
+# Maps model names to their available providers and provider-specific mappings
+#
+# To add a new model:
+# 1. Add an entry under 'models' with the model name as the key
+# 2. List the providers that support this model under 'providers'
+# 3. Add any provider-specific name mappings under 'mappings'
+#
+# Example:
+#   new-model-name:
+#     providers:
+#       - provider1
+#       - provider2
+#     mappings:
+#       provider1: provider1-specific-name
+#       provider2: provider2-specific-name
+#
+# Note: If no mapping is specified for a provider, the original model name is used
+
+models:
+  # Anthropic models
+  claude-3-opus:
+    providers:
+      - anthropic
+      - vertexai
+    mappings:
+      anthropic: claude-3-opus-20240229
+      vertexai: claude-3-opus@20240229
+  
+  claude-3-opus-20240229:
+    providers:
+      - anthropic
+      - vertexai
+    mappings:
+      vertexai: claude-3-opus@20240229
+  
+  claude-3-sonnet:
+    providers:
+      - anthropic
+      - vertexai
+    mappings:
+      anthropic: claude-3-sonnet-20240229
+      vertexai: claude-3-sonnet@20240229
+  
+  claude-3-sonnet-20240229:
+    providers:
+      - anthropic
+      - vertexai
+    mappings:
+      vertexai: claude-3-sonnet@20240229
+  
+  claude-3-haiku:
+    providers:
+      - anthropic
+      - vertexai
+    mappings:
+      anthropic: claude-3-haiku-20240307
+      vertexai: claude-3-haiku@20240307
+  
+  claude-3-haiku-20240307:
+    providers:
+      - anthropic
+      - vertexai
+    mappings:
+      vertexai: claude-3-haiku@20240307
+  
+  claude-sonnet-4:
+    providers:
+      - anthropic
+      - vertexai
+    mappings:
+      anthropic: claude-sonnet-4-20250514
+      vertexai: claude-sonnet-4@20250514
+  
+  claude-sonnet-4-20250514:
+    providers:
+      - anthropic
+      - vertexai
+    mappings:
+      vertexai: claude-sonnet-4@20250514
+  
+  claude-opus-4:
+    providers:
+      - anthropic
+      - vertexai
+    mappings:
+      anthropic: claude-opus-4-20250514
+      vertexai: claude-opus-4@20250514
+  
+  claude-opus-4-20250514:
+    providers:
+      - anthropic
+      - vertexai
+    mappings:
+      vertexai: claude-opus-4@20250514
+  
+  # OpenAI models
+  gpt-4:
+    providers:
+      - openai
+      - azure
+    mappings:
+      openai: gpt-4
+  
+  gpt-4-turbo:
+    providers:
+      - openai
+      - azure
+    mappings:
+      openai: gpt-4-turbo-preview
+  
+  gpt-4.1:
+    providers:
+      - openai
+      - azure
+  
+  gpt-3.5:
+    providers:
+      - openai
+      - azure
+    mappings:
+      openai: gpt-3.5-turbo
+  
+  gpt-3.5-turbo:
+    providers:
+      - openai
+      - azure
+    mappings:
+      openai: gpt-3.5-turbo
+  
+  # Google models
+  gemini-pro:
+    providers:
+      - google
+      - vertexai
+    mappings:
+      google: gemini-1.0-pro
+      vertexai: gemini-1.0-pro
+  
+  gemini-pro-vision:
+    providers:
+      - google
+      - vertexai
+    mappings:
+      google: gemini-1.0-pro-vision
+      vertexai: gemini-1.0-pro-vision
+  
+  gemini-1.5-pro:
+    providers:
+      - google
+      - vertexai
+    mappings:
+      google: gemini-1.5-pro-latest
+      vertexai: gemini-1.5-pro-latest
+  
+  gemini-1.5-flash:
+    providers:
+      - google
+      - vertexai
+    mappings:
+      google: gemini-1.5-flash-latest
+      vertexai: gemini-1.5-flash-latest
+  
+  gemini-2-flash:
+    providers:
+      - google
+      - vertexai
+    mappings:
+      google: gemini-2.0-flash-001
+      vertexai: gemini-2.0-flash-001
+  
+  gemini-2.0-flash:
+    providers:
+      - google
+      - vertexai
+    mappings:
+      google: gemini-2.0-flash-001
+      vertexai: gemini-2.0-flash-001

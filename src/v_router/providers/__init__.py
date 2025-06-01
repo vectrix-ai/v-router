@@ -1,9 +1,9 @@
 """Provider implementations for vectrix-router."""
 
-from .anthropic import AnthropicProvider, AnthropicVertexProvider
-from .base import BaseProvider, Message, Response
-from .google import GoogleProvider, GoogleVertexProvider
-from .openai import AzureOpenAIProvider, OpenAIProvider
+from v_router.providers.anthropic import AnthropicProvider, AnthropicVertexProvider
+from v_router.providers.base import BaseProvider, Message, Response
+from v_router.providers.google import GoogleProvider, GoogleVertexProvider
+from v_router.providers.openai import AzureOpenAIProvider, OpenAIProvider
 
 __all__ = [
     "BaseProvider",

@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from v_router.models.llm import LLM, BackupModel
+from v_router.classes.llm import LLM, BackupModel
 
 
 class TestBackupModel:
@@ -68,7 +68,7 @@ class TestLLM:
         assert llm.model_name == "gpt-4"
         assert llm.provider == "openai"
         assert llm.max_tokens is None
-        assert llm.temperature == 0.7  # Default value
+        assert llm.temperature == 0  # Default value
         assert llm.backup_models == []  # Default empty list
     
     def test_llm_creation_full(self):

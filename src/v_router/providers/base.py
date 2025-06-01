@@ -1,73 +1,67 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
-from pydantic import BaseModel
-
-
-class Message(BaseModel):
-    """Unified message format for all providers."""
-
-    role: str  # "system", "user", "assistant"
-    content: str
-    name: Optional[str] = None
-
-
-class Response(BaseModel):
-    """Unified response format from all providers."""
-
-    content: str
-    model: str
-    provider: str
-    usage: Optional[Dict[str, Any]] = None
-    raw_response: Optional[Any] = None  # Original provider response
+from v_router.classes.message import Message
+from v_router.classes.response import Response
+from v_router.classes.tools import Tools
 
 
 class BaseProvider(ABC):
-    """Abstract base class for all LLM providers."""
-    
-    def __init__(self, **kwargs):
-        """Initialize the provider with necessary credentials."""
-        self.kwargs = kwargs
-    
+    """Base class for all LLM providers."""
+
+    def __init__(self, model_mapper=None, **kwargs):
+        """Initialize the provider.
+
+        Args:
+            model_mapper: Optional function to map model names
+            **kwargs: Additional provider-specific configuration
+
+        """
+        self.model_mapper = model_mapper
+        self.config = kwargs
+
     @abstractmethod
     async def create_message(
-        self, 
+        self,
         messages: List[Message],
         model: str,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
-        **kwargs
+        tools: Optional[Tools] = None,
+        **kwargs,
     ) -> Response:
         """Create a message using the provider's API.
-        
+
         Args:
-            messages: List of messages in the conversation
+            messages: List of messages to send
             model: Model name to use
             max_tokens: Maximum tokens to generate
-            temperature: Sampling temperature
+            temperature: Temperature for generation
+            tools: Tools/functions that can be called by the model
             **kwargs: Additional provider-specific parameters
-            
+
         Returns:
-            Unified Response object
-            
+            Response from the provider
+
         """
         pass
-    
-    @abstractmethod
+
     def validate_model_name(self, model: str) -> str:
-        """Validate and potentially transform model name for this provider.
-        
+        """Validate and transform model name for the provider.
+
         Args:
-            model: Model name from configuration
-            
+            model: Original model name
+
         Returns:
             Provider-specific model name
 
         """
-        pass
-    
+        if self.model_mapper:
+            return self.model_mapper(model)
+        return model
+
     @property
     @abstractmethod
     def name(self) -> str:
         """Return the provider name."""
-        pass 
+        pass
