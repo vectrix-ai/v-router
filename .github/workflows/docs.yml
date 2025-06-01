@@ -51,8 +51,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --dev --frozen
-          uv add mkdocs-material
+          uv sync --all-extras
 
       - name: Setup Pages
         id: pages
@@ -60,7 +59,9 @@ jobs:
 
       - name: Build documentation
         run: |
-          uv run mkdocs build --clean
+          # Update site_url in mkdocs.yml for GitHub Pages
+          sed -i "s|site_url: https://vectrix-ai.github.io/v-router|site_url: ${{ steps.pages.outputs.base_url }}|g" mkdocs.yml
+          uv run mkdocs build --clean --verbose
         env:
           # Set the site URL for proper canonical URLs
           SITE_URL: ${{ steps.pages.outputs.base_url }}

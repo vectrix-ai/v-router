@@ -10,6 +10,9 @@ repo_name: vectrix-ai/v-router
 repo_url: https://github.com/vectrix-ai/v-router
 edit_uri: edit/main/docs/
 
+# GitHub Pages configuration
+use_directory_urls: true
+
 # Copyright
 copyright: Copyright &copy; 2024 Ben Selleslagh
 
