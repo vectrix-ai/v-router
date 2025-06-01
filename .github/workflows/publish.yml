@@ -1,0 +1,33 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      id-token: write  # Required for trusted publishing to PyPI
+      contents: read   # Required to read the repository contents
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Build package
+        run: uv build --no-sources
+
+      - name: Publish to PyPI
+        run: uv publish
+
+      - name: Verify installation
+        run: |
+          uv run --with v-router --no-project -- python -c "import v_router; print('Package installed successfully')"
