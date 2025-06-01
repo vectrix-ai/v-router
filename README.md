@@ -2,16 +2,17 @@
 
 A unified LLM interface that provides automatic fallback between different LLM providers. Route your AI requests seamlessly across **Anthropic**, **OpenAI**, **Google**, and **Azure** with intelligent failover strategies and a consistent API.
 
-## =� Features
+## ✨ Features
 
-- **= Automatic Fallback**: Seamless switching between models and providers when failures occur
-- **<� Unified API**: Same interface works across all major LLM providers
-- **� Smart Routing**: Intelligent model selection based on availability and configuration
-- **=� Function Calling**: Unified tool calling interface across all providers
-- **=� Consistent Responses**: Standardized response format regardless of provider
-- **=' Flexible Configuration**: Fine-tune parameters, backup models, and provider priorities
+- **🚀 Automatic Fallback**: Seamless switching between models and providers when failures occur
+- **📚 Unified API**: Same interface works across all major LLM providers
+- **⚡ Smart Routing**: Intelligent model selection based on availability and configuration
+- **🔧 Function Calling**: Unified tool calling interface across all providers
+- **🖼️ Multimodal Support**: Send images and PDFs with automatic format conversion
+- **🎯 Consistent Responses**: Standardized response format regardless of provider
+- **⚙️ Flexible Configuration**: Fine-tune parameters, backup models, and provider priorities
 
-## =� Installation
+## 📦 Installation
 
 ```bash
 pip install v-router
@@ -23,7 +24,7 @@ Or with development dependencies:
 uv sync --all-extras
 ```
 
-## <� Quick Start
+## 🚀 Quick Start
 
 ### Basic Usage
 
@@ -100,7 +101,7 @@ response = await client.messages.create(
 )
 ```
 
-## =� Function Calling
+## 🔧 Function Calling
 
 v-router provides unified function calling across all providers:
 
@@ -142,17 +143,67 @@ if response.tool_use:
         print(f"Arguments: {tool_call.arguments}")
 ```
 
-## =� Supported Providers
+## 🖼️ Multimodal Support
+
+Send images and PDFs seamlessly across providers:
+
+```python
+from v_router import Client, LLM
+from v_router.classes.message import TextContent, ImageContent, DocumentContent
+
+# Create client
+client = Client(
+    llm_config=LLM(
+        model_name="claude-sonnet-4",
+        provider="anthropic"
+    )
+)
+
+# Method 1: Send image by file path (automatic conversion)
+response = await client.messages.create(
+    messages=[
+        {
+            "role": "user",
+            "content": "/path/to/image.jpg"  # Automatically converted to base64
+        },
+        {
+            "role": "user", 
+            "content": "What do you see in this image?"
+        }
+    ]
+)
+
+# Method 2: Send multimodal content with explicit types
+import base64
+with open("image.jpg", "rb") as f:
+    image_data = base64.b64encode(f.read()).decode("utf-8")
+
+response = await client.messages.create(
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                TextContent(text="Analyze this image:"),
+                ImageContent(data=image_data, media_type="image/jpeg")
+            ]
+        }
+    ]
+)
+
+print(f"Response: {response.content[0].text}")
+```
+
+## 🌐 Supported Providers
 
 | Provider | Models | Features |
 |----------|--------|----------|
-| **Anthropic** | Claude 3 (Opus, Sonnet, Haiku), Claude 4 (Opus, Sonnet) | Function calling |
-| **OpenAI** | GPT-4, GPT-4 Turbo, GPT-4.1, GPT-3.5 | Function calling |
-| **Google** | Gemini Pro, Gemini 1.5 (Pro, Flash), Gemini 2.0 Flash | Function calling |
-| **Azure OpenAI** | GPT-4, GPT-4 Turbo, GPT-4.1, GPT-3.5 | Function calling |
-| **Vertex AI** | Claude 3/4 & Gemini models via Google Cloud | Function calling |
+| **Anthropic** | Claude 3 (Opus, Sonnet, Haiku), Claude 4 (Opus, Sonnet) | Function calling, Images, PDFs |
+| **OpenAI** | GPT-4, GPT-4 Turbo, GPT-4.1, GPT-3.5 | Function calling, Images |
+| **Google** | Gemini Pro, Gemini 1.5 (Pro, Flash), Gemini 2.0 Flash | Function calling, Images, PDFs |
+| **Azure OpenAI** | GPT-4, GPT-4 Turbo, GPT-4.1, GPT-3.5 | Function calling, Images |
+| **Vertex AI** | Claude 3/4 & Gemini models via Google Cloud | Function calling, Images, PDFs |
 
-## Configuration
+## ⚙️ Configuration
 
 ### Environment Variables
 
@@ -184,13 +235,13 @@ v-router uses `models.yml` to map model names across providers. You can use gene
 
 ```python
 # These all work automatically:
-LLM(model_name="claude-sonnet-4", provider="anthropic")      # � claude-sonnet-4-20250514
-LLM(model_name="claude-sonnet-4", provider="vertexai")       # � claude-sonnet-4@20250514
-LLM(model_name="gpt-4", provider="openai")                   # � gpt-4
-LLM(model_name="gemini-1.5-pro", provider="google")          # � gemini-1.5-pro-latest
+LLM(model_name="claude-sonnet-4", provider="anthropic")      # → claude-sonnet-4-20250514
+LLM(model_name="claude-sonnet-4", provider="vertexai")       # → claude-sonnet-4@20250514
+LLM(model_name="gpt-4", provider="openai")                   # → gpt-4
+LLM(model_name="gemini-1.5-pro", provider="google")          # → gemini-1.5-pro-latest
 ```
 
-## = Response Format
+## 📝 Response Format
 
 All providers return the same unified response structure:
 
@@ -204,27 +255,27 @@ class Response:
     raw_response: Any              # Original provider response
 ```
 
-## =� Examples
+## 📖 Examples
 
 Explore the [`examples/`](examples/) directory for detailed usage:
 
 - **[quickstart_models.ipynb](examples/quickstart_models.ipynb)**: Basic usage, fallbacks, and cross-provider switching
 - **[quickstart_tool_calling.ipynb](examples/quickstart_tool_calling.ipynb)**: Function calling across providers
+- **[multimodal_content.ipynb](examples/multimodal_content.ipynb)**: Working with images and PDFs across providers
 - **[providers/](examples/providers/)**: Provider-specific examples
 
-## =� Development Roadmap
+## 🗺️ Development Roadmap
 
-- [x] **Chat Completions**: Unified interface across providers 
-- [x] **Function Calling**: Tool calling support 
-- [ ] **Multimodal Support**: Images, PDFs, and document processing
+- [x] **Chat Completions**: Unified interface across providers 
+- [x] **Function Calling**: Tool calling support 
+- [x] **Multimodal Support**: Images, PDFs, and document processing
 - [ ] **Streaming**: Real-time response streaming
-- [ ] **LangSmith Integration**: Advanced monitoring and tracing
 - [ ] **AWS Bedrock**: Additional provider support
 - [ ] **JSON Mode**: Structured output generation
 - [ ] **Prompt Caching**: Optimization for repeated prompts
 - [ ] **Ollama Support**: Local model integration
 
-## >� Development
+## 🛠️ Development
 
 ### Setup
 
@@ -262,7 +313,7 @@ uv run ruff check --fix .
 uv run ruff format .
 ```
 
-## <� Architecture
+## 🏗️ Architecture
 
 v-router follows a clean provider pattern:
 
@@ -279,15 +330,15 @@ v-router follows a clean provider pattern:
 4. Add to `PROVIDER_REGISTRY` in `router.py`
 5. Update `models.yml` with supported models
 
-## =� License
+## 📄 License
 
 This project is licensed under the MIT License.
 
-## > Contributing
+## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## =� Support
+## 📞 Support
 
 - **Issues**: [GitHub Issues](https://github.com/anthropics/claude-code/issues)
 - **Documentation**: See examples in the [`examples/`](examples/) directory
