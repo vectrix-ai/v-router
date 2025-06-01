@@ -1,0 +1,180 @@
+# yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
+
+site_name: v-router
+site_description: A unified LLM interface that provides automatic fallback between different LLM providers
+site_author: Ben Selleslagh
+site_url: https://vectrix-ai.github.io/v-router
+
+# Repository
+repo_name: vectrix-ai/v-router
+repo_url: https://github.com/vectrix-ai/v-router
+edit_uri: edit/main/docs/
+
+# Copyright
+copyright: Copyright &copy; 2024 Ben Selleslagh
+
+# Configuration
+theme:
+  name: material
+  language: en
+  
+  # Color palette
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  
+  # Fonts
+  font:
+    text: Roboto
+    code: Roboto Mono
+  
+  # Logo and favicon
+  icon:
+    logo: material/router
+    repo: fontawesome/brands/github
+  
+  # Features
+  features:
+    - announce.dismiss
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.code.select
+    - content.tabs.link
+    - content.tooltips
+    - header.autohide
+    - navigation.expand
+    - navigation.footer
+    - navigation.indexes
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    - navigation.prune
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+
+# Customization
+extra:
+  version:
+    provider: mike
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/vectrix-ai/v-router
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/v-router/
+  generator: false
+
+# Extensions
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      normalize_issue_symbols: true
+      repo_url_shorthand: true
+      user: vectrix-ai
+      repo: v-router
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      auto_append:
+        - includes/mkdocs.md
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+      combine_header_slug: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Plugins
+plugins:
+  - search:
+      separator: '[\s\u200b\-_,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+
+# Page tree
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quick-start.md
+    - Configuration: getting-started/configuration.md
+  - User Guide:
+    - Basic Usage: guide/basic-usage.md
+    - Automatic Fallback: guide/automatic-fallback.md
+    - Function Calling: guide/function-calling.md
+    - Multimodal Content: guide/multimodal-content.md
+    - Provider Configuration: guide/provider-configuration.md
+    - Error Handling: guide/error-handling.md
+  - API Reference:
+    - Client: api/client.md
+    - LLM Configuration: api/llm.md
+    - Messages: api/messages.md
+    - Response: api/response.md
+    - Providers: api/providers.md
+    - Tools: api/tools.md
+  - Providers:
+    - Overview: providers/overview.md
+    - Anthropic: providers/anthropic.md
+    - OpenAI: providers/openai.md
+    - Google AI: providers/google.md
+    - Azure OpenAI: providers/azure.md
+    - Vertex AI: providers/vertex.md
+  - Examples:
+    - Basic Examples: examples/basic.md
+    - Advanced Patterns: examples/advanced.md
+    - Provider Comparisons: examples/provider-comparisons.md
+    - Real-world Use Cases: examples/use-cases.md
+  - Development:
+    - Contributing: development/contributing.md
+    - Architecture: development/architecture.md
+    - Adding Providers: development/adding-providers.md
+    - Testing: development/testing.md
+  - Changelog: changelog.md
