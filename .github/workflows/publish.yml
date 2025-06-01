@@ -2,11 +2,17 @@ name: Publish to PyPI
 
 on:
   release:
-    types: [published]
+    types: [published, released, created]
+  workflow_run:
+    workflows: ["Version Bump and Auto Release"]
+    types: [completed]
+    branches: [main]
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # Only run if triggered by release or if the version-bump workflow succeeded
+    if: github.event_name == 'release' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     
     permissions:
       id-token: write  # Required for trusted publishing to PyPI
