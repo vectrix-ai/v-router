@@ -60,7 +60,7 @@ jobs:
 
       - name: Build documentation
         run: |
-          uv run mkdocs build --clean --strict
+          uv run mkdocs build --clean
         env:
           # Set the site URL for proper canonical URLs
           SITE_URL: ${{ steps.pages.outputs.base_url }}

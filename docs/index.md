@@ -12,7 +12,7 @@ A unified LLM interface that provides automatic fallback between different LLM p
 
     Seamlessly switch between models and providers when failures occur. Configure backup models and cross-provider fallback strategies.
 
-    [:octicons-arrow-right-24: Learn about fallback strategies](guide/automatic-fallback.md)
+    [:octicons-arrow-right-24: Learn about fallback strategies](getting-started/quick-start.md)
 
 -   :material-api:{ .lg .middle } **Unified API**
 
@@ -28,7 +28,7 @@ A unified LLM interface that provides automatic fallback between different LLM p
 
     Intelligent model selection based on availability and configuration. Automatic model name mapping across providers.
 
-    [:octicons-arrow-right-24: See provider configuration](guide/provider-configuration.md)
+    [:octicons-arrow-right-24: See provider configuration](getting-started/configuration.md)
 
 -   :material-tools:{ .lg .middle } **Function Calling**
 
@@ -44,7 +44,7 @@ A unified LLM interface that provides automatic fallback between different LLM p
 
     Send images and PDFs with automatic format conversion. Support for vision models across all providers.
 
-    [:octicons-arrow-right-24: Multimodal examples](guide/multimodal-content.md)
+    [:octicons-arrow-right-24: Multimodal examples](getting-started/quick-start.md)
 
 -   :material-cog:{ .lg .middle } **Flexible Configuration**
 
@@ -89,11 +89,11 @@ print(f"Model used: {response.model} ({response.provider})")
 
 | Provider | Models | Features |
 |----------|--------|----------|
-| **[Anthropic](providers/anthropic.md)** | Claude 3 (Opus, Sonnet, Haiku), Claude 4 (Opus, Sonnet) | Function calling, Images, PDFs |
-| **[OpenAI](providers/openai.md)** | GPT-4, GPT-4 Turbo, GPT-4.1, GPT-3.5 | Function calling, Images |
-| **[Google AI](providers/google.md)** | Gemini Pro, Gemini 1.5 (Pro, Flash), Gemini 2.0 Flash | Function calling, Images, PDFs |
-| **[Azure OpenAI](providers/azure.md)** | GPT-4, GPT-4 Turbo, GPT-4.1, GPT-3.5 | Function calling, Images |
-| **[Vertex AI](providers/vertex.md)** | Claude 3/4 & Gemini models via Google Cloud | Function calling, Images, PDFs |
+| **Anthropic** | Claude 3 (Opus, Sonnet, Haiku), Claude 4 (Opus, Sonnet) | Function calling, Images, PDFs |
+| **OpenAI** | GPT-4, GPT-4 Turbo, GPT-4.1, GPT-3.5 | Function calling, Images |
+| **Google AI** | Gemini Pro, Gemini 1.5 (Pro, Flash), Gemini 2.0 Flash | Function calling, Images, PDFs |
+| **Azure OpenAI** | GPT-4, GPT-4 Turbo, GPT-4.1, GPT-3.5 | Function calling, Images |
+| **Vertex AI** | Claude 3/4 & Gemini models via Google Cloud | Function calling, Images, PDFs |
 
 ## Why v-router?
 
