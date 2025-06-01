@@ -1,7 +1,7 @@
 [project]
 name = "v-router"
 version = "0.0.9"
-description = "Add your description here"
+description = "A lightweight AI model router for seamlessly switching between multiple AI providers (OpenAI, Anthropic, Google AI) with unified API interface."
 readme = "README.md"
 authors = [
     { name = "Ben Selleslagh", email = "ben@vectrix.ai" }
@@ -27,6 +27,7 @@ build-backend = "hatchling.build"
 dev = [
     "bump2version>=1.0.1",
     "ipykernel>=6.29.5",
+    "mkdocs-material>=9.6.14",
     "pre-commit>=4.2.0",
     "pytest>=8.3.5",
     "pytest-asyncio>=1.0.0",
