@@ -90,17 +90,3 @@ jobs:
             For full changes, see the [comparison between v${{ steps.version-bump.outputs.previous_version }} and v${{ steps.version-bump.outputs.new_version }}](../../compare/v${{ steps.version-bump.outputs.previous_version }}...v${{ steps.version-bump.outputs.new_version }})
           draft: false
           prerelease: false
-
-      - name: Trigger Publish Workflow
-        uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'publish.yml',
-              ref: 'main',
-              inputs: {
-                version: '${{ steps.version-bump.outputs.new_version }}'
-              }
-            })
