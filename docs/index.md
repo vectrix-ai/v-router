@@ -4,57 +4,17 @@ A unified LLM interface that provides automatic fallback between different LLM p
 
 ## ✨ Key Features
 
-<div class="grid cards" markdown>
+- **🚀 Automatic Fallback**: Seamlessly switch between models and providers when failures occur. Configure backup models and cross-provider fallback strategies. [Learn more →](getting-started/quick-start.md)
 
--   :rocket:{ .lg .middle } **Automatic Fallback**
+- **🔗 Unified API**: Same interface works across all major LLM providers. Write once, run anywhere with consistent request/response formats. [Explore the API →](api/client.md)
 
-    ---
+- **⚡ Smart Routing**: Intelligent model selection based on availability and configuration. Automatic model name mapping across providers. [See provider configuration →](getting-started/configuration.md)
 
-    Seamlessly switch between models and providers when failures occur. Configure backup models and cross-provider fallback strategies.
+- **🛠️ Function Calling**: Unified tool calling interface across all providers. Use the same function definitions everywhere. [Function calling guide →](guide/function-calling.md)
 
-    [:octicons-arrow-right-24: Learn about fallback strategies](getting-started/quick-start.md)
+- **🖼️ Multimodal Support**: Send images and PDFs with automatic format conversion. Support for vision models across all providers. [Multimodal examples →](getting-started/quick-start.md)
 
--   :material-api:{ .lg .middle } **Unified API**
-
-    ---
-
-    Same interface works across all major LLM providers. Write once, run anywhere with consistent request/response formats.
-
-    [:octicons-arrow-right-24: Explore the API](api/client.md)
-
--   :zap:{ .lg .middle } **Smart Routing**
-
-    ---
-
-    Intelligent model selection based on availability and configuration. Automatic model name mapping across providers.
-
-    [:octicons-arrow-right-24: See provider configuration](getting-started/configuration.md)
-
--   :material-tools:{ .lg .middle } **Function Calling**
-
-    ---
-
-    Unified tool calling interface across all providers. Use the same function definitions everywhere.
-
-    [:octicons-arrow-right-24: Function calling guide](guide/function-calling.md)
-
--   :material-image:{ .lg .middle } **Multimodal Support**
-
-    ---
-
-    Send images and PDFs with automatic format conversion. Support for vision models across all providers.
-
-    [:octicons-arrow-right-24: Multimodal examples](getting-started/quick-start.md)
-
--   :material-cog:{ .lg .middle } **Flexible Configuration**
-
-    ---
-
-    Fine-tune parameters, backup models, and provider priorities. Extensive customization options.
-
-    [:octicons-arrow-right-24: Configuration guide](getting-started/configuration.md)
-
-</div>
+- **⚙️ Flexible Configuration**: Fine-tune parameters, backup models, and provider priorities. Extensive customization options. [Configuration guide →](getting-started/configuration.md)
 
 ## Quick Example
 
