@@ -1,37 +1,28 @@
 name: Publish to PyPI
 
 on:
-  workflow_run:
-    workflows: ["Version Bump and Auto Release"]
-    types: [completed]
-    branches: [main]
-  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
 
 jobs:
-  publish:
+  release:
+    name: Publish to PyPI
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success'
-    
+    environment: pypi
     permissions:
-      id-token: write  # Required for trusted publishing to PyPI
-      contents: read   # Required to read the repository contents
-
+      id-token: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
+      - name: Install uv and setup the python version
+        uses: astral-sh/setup-uv@v5
 
-      - name: Set up Python
-        run: uv python install
+      - name: Install the project
+        run: uv sync --all-groups
 
-      - name: Build package
-        run: uv build --no-sources
+      - name: Build wheel
+        run: uv build
 
-      - name: Publish to PyPI
+      - name: Publish package
         run: uv publish
-
-      - name: Verify installation
-        run: |
-          uv run --with v-router --no-project -- python -c "import v_router; print('Package installed successfully')"
