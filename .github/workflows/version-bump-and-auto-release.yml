@@ -5,12 +5,17 @@ on:
     types: [closed]
     branches:
       - main
+  push:
+    branches:
+      - main
 
 jobs:
   bump-version:
     runs-on: ubuntu-latest
-    # Only run when PR is merged (not when closed without merging)
-    if: github.event.pull_request.merged == true
+    # Only run when PR is merged OR when pushing directly to main (but not when push is from PR merge)
+    if: |
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || 
+      (github.event_name == 'push' && github.actor != 'github-actions[bot]')
     permissions:
       contents: write  # Needed for pushing commits
       pull-requests: write  # If you want to create PRs
@@ -39,11 +44,19 @@ jobs:
       - name: Determine version bump type
         id: bump-type
         run: |
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          PR_BODY="${{ github.event.pull_request.body }}"
-          if echo "$PR_TITLE $PR_BODY" | grep -q "#major"; then
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # For PR merges, check PR title and body
+            PR_TITLE="${{ github.event.pull_request.title }}"
+            PR_BODY="${{ github.event.pull_request.body }}"
+            TEXT_TO_CHECK="$PR_TITLE $PR_BODY"
+          else
+            # For direct pushes, check the latest commit message
+            TEXT_TO_CHECK=$(git log -1 --pretty=format:"%s %b")
+          fi
+          
+          if echo "$TEXT_TO_CHECK" | grep -q "#major"; then
             echo "bump=major" >> $GITHUB_OUTPUT
-          elif echo "$PR_TITLE $PR_BODY" | grep -q "#minor"; then
+          elif echo "$TEXT_TO_CHECK" | grep -q "#minor"; then
             echo "bump=minor" >> $GITHUB_OUTPUT
           else
             echo "bump=patch" >> $GITHUB_OUTPUT
