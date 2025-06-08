@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "Ben Selleslagh", email = "ben@vectrix.ai" }
 ]
-requires-python = ">=3.13.3"
+requires-python = ">=3.11"
 dependencies = [
     "anthropic[vertex]>=0.52.0",
     "colorlog>=6.9.0",
