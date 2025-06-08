@@ -1,6 +1,6 @@
 import base64
 import os
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from google import genai
 
@@ -32,6 +32,7 @@ class GoogleProvider(BaseProvider):
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         tools: Optional[Tools] = None,
+        tool_choice: Optional[Any] = None,
         **kwargs,
     ) -> Response:
         """Create a message using Google's API."""
@@ -56,6 +57,11 @@ class GoogleProvider(BaseProvider):
         if tools:
             google_tools = self._convert_tools_to_google_format(tools)
             config["tools"] = google_tools
+
+            # Add tool_choice if provided
+            if tool_choice is not None:
+                tool_config = self._convert_tool_choice_to_google_format(tool_choice)
+                config["tool_config"] = tool_config
 
         if config:
             params["config"] = genai.types.GenerateContentConfig(**config)
@@ -181,6 +187,36 @@ class GoogleProvider(BaseProvider):
                 }
             )
         return [genai.types.Tool(function_declarations=google_tools)]
+
+    def _convert_tool_choice_to_google_format(self, tool_choice):
+        """Convert tool_choice to Google format."""
+        if isinstance(tool_choice, dict):
+            # Already in provider-specific format
+            return genai.types.ToolConfig(**tool_choice)
+        elif tool_choice == "auto":
+            return genai.types.ToolConfig(
+                function_calling_config=genai.types.FunctionCallingConfig(mode="AUTO")
+            )
+        elif tool_choice == "any":
+            return genai.types.ToolConfig(
+                function_calling_config=genai.types.FunctionCallingConfig(mode="ANY")
+            )
+        elif tool_choice == "none":
+            return genai.types.ToolConfig(
+                function_calling_config=genai.types.FunctionCallingConfig(mode="NONE")
+            )
+        elif isinstance(tool_choice, str):
+            # Tool name specified
+            return genai.types.ToolConfig(
+                function_calling_config=genai.types.FunctionCallingConfig(
+                    mode="ANY", allowed_function_names=[tool_choice]
+                )
+            )
+        else:
+            # Default to auto
+            return genai.types.ToolConfig(
+                function_calling_config=genai.types.FunctionCallingConfig(mode="AUTO")
+            )
 
     def _convert_content_to_google_parts(self, content) -> List:
         """Convert message content to Google Part format."""
@@ -260,6 +296,7 @@ class GoogleVertexProvider(BaseProvider):
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         tools: Optional[Tools] = None,
+        tool_choice: Optional[Any] = None,
         **kwargs,
     ) -> Response:
         """Create a message using Google Vertex AI."""
@@ -284,6 +321,11 @@ class GoogleVertexProvider(BaseProvider):
         if tools:
             google_tools = self._convert_tools_to_google_format(tools)
             config["tools"] = google_tools
+
+            # Add tool_choice if provided
+            if tool_choice is not None:
+                tool_config = self._convert_tool_choice_to_google_format(tool_choice)
+                config["tool_config"] = tool_config
 
         if config:
             params["config"] = genai.types.GenerateContentConfig(**config)
@@ -409,6 +451,36 @@ class GoogleVertexProvider(BaseProvider):
                 }
             )
         return [genai.types.Tool(function_declarations=google_tools)]
+
+    def _convert_tool_choice_to_google_format(self, tool_choice):
+        """Convert tool_choice to Google format."""
+        if isinstance(tool_choice, dict):
+            # Already in provider-specific format
+            return genai.types.ToolConfig(**tool_choice)
+        elif tool_choice == "auto":
+            return genai.types.ToolConfig(
+                function_calling_config=genai.types.FunctionCallingConfig(mode="AUTO")
+            )
+        elif tool_choice == "any":
+            return genai.types.ToolConfig(
+                function_calling_config=genai.types.FunctionCallingConfig(mode="ANY")
+            )
+        elif tool_choice == "none":
+            return genai.types.ToolConfig(
+                function_calling_config=genai.types.FunctionCallingConfig(mode="NONE")
+            )
+        elif isinstance(tool_choice, str):
+            # Tool name specified
+            return genai.types.ToolConfig(
+                function_calling_config=genai.types.FunctionCallingConfig(
+                    mode="ANY", allowed_function_names=[tool_choice]
+                )
+            )
+        else:
+            # Default to auto
+            return genai.types.ToolConfig(
+                function_calling_config=genai.types.FunctionCallingConfig(mode="AUTO")
+            )
 
     def _convert_content_to_google_parts(self, content) -> List:
         """Convert message content to Google Part format."""

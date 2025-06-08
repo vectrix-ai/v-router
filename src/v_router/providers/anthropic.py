@@ -1,5 +1,5 @@
 import os
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from anthropic import AsyncAnthropic, AsyncAnthropicVertex
 
@@ -31,6 +31,7 @@ class AnthropicProvider(BaseProvider):
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         tools: Optional[Tools] = None,
+        tool_choice: Optional[Any] = None,
         **kwargs,
     ) -> Response:
         """Create a message using Anthropic's API."""
@@ -75,6 +76,12 @@ class AnthropicProvider(BaseProvider):
         # Add tools if provided
         if tools:
             params["tools"] = self._convert_tools_to_anthropic_format(tools)
+
+            # Add tool_choice if provided
+            if tool_choice is not None:
+                params["tool_choice"] = self._convert_tool_choice_to_anthropic_format(
+                    tool_choice
+                )
 
         # Add any additional kwargs
         params.update(kwargs)
@@ -151,6 +158,24 @@ class AnthropicProvider(BaseProvider):
                 }
             )
         return anthropic_tools
+
+    def _convert_tool_choice_to_anthropic_format(self, tool_choice):
+        """Convert tool_choice to Anthropic format."""
+        if isinstance(tool_choice, dict):
+            # Already in provider-specific format
+            return tool_choice
+        elif tool_choice == "auto":
+            return {"type": "auto"}
+        elif tool_choice == "any":
+            return {"type": "any"}
+        elif tool_choice == "none":
+            return {"type": "none"}
+        elif isinstance(tool_choice, str):
+            # Tool name specified
+            return {"type": "tool", "name": tool_choice}
+        else:
+            # Default to auto
+            return {"type": "auto"}
 
     def _convert_content_to_anthropic_format(self, content):
         """Convert message content to Anthropic format."""
@@ -232,6 +257,7 @@ class AnthropicVertexProvider(BaseProvider):
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         tools: Optional[Tools] = None,
+        tool_choice: Optional[Any] = None,
         **kwargs,
     ) -> Response:
         """Create a message using Anthropic via Vertex AI."""
@@ -276,6 +302,12 @@ class AnthropicVertexProvider(BaseProvider):
         # Add tools if provided
         if tools:
             params["tools"] = self._convert_tools_to_anthropic_format(tools)
+
+            # Add tool_choice if provided
+            if tool_choice is not None:
+                params["tool_choice"] = self._convert_tool_choice_to_anthropic_format(
+                    tool_choice
+                )
 
         # Add any additional kwargs
         params.update(kwargs)
@@ -352,6 +384,24 @@ class AnthropicVertexProvider(BaseProvider):
                 }
             )
         return anthropic_tools
+
+    def _convert_tool_choice_to_anthropic_format(self, tool_choice):
+        """Convert tool_choice to Anthropic format."""
+        if isinstance(tool_choice, dict):
+            # Already in provider-specific format
+            return tool_choice
+        elif tool_choice == "auto":
+            return {"type": "auto"}
+        elif tool_choice == "any":
+            return {"type": "any"}
+        elif tool_choice == "none":
+            return {"type": "none"}
+        elif isinstance(tool_choice, str):
+            # Tool name specified
+            return {"type": "tool", "name": tool_choice}
+        else:
+            # Default to auto
+            return {"type": "auto"}
 
     def _convert_content_to_anthropic_format(self, content):
         """Convert message content to Anthropic format."""

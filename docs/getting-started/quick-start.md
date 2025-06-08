@@ -197,6 +197,46 @@ except Exception as e:
     # v-router will have already tried backup models if configured
 ```
 
+## Function Calling Preview
+
+v-router provides unified function calling across all providers with fine-grained control:
+
+```python
+from v_router.classes.tools import ToolCall, Tools
+from pydantic import BaseModel, Field
+
+# Define a tool
+class Calculator(BaseModel):
+    expression: str = Field(..., description="Mathematical expression to evaluate")
+
+calc_tool = ToolCall(
+    name="calculator",
+    description="Perform calculations",
+    input_schema=Calculator.model_json_schema()
+)
+
+# Configure with tool control
+llm_config = LLM(
+    model_name="claude-sonnet-4",
+    provider="anthropic",
+    tools=Tools(tools=[calc_tool]),
+    tool_choice="auto"  # "auto", "any", "none", or tool name
+)
+
+client = Client(llm_config)
+response = await client.messages.create(
+    messages=[{"role": "user", "content": "What's 15 * 23?"}]
+)
+
+# Check for tool calls
+if response.tool_use:
+    for tool_call in response.tool_use:
+        print(f"Tool: {tool_call.name}, Args: {tool_call.arguments}")
+```
+
+!!! tip "Tool Choice Control"
+    Use `tool_choice="calculator"` to force the calculator tool, `"any"` to require any tool, or `"none"` to disable tools entirely.
+
 ## Complete Example
 
 Here's a complete example that demonstrates multiple features:

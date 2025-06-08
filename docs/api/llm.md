@@ -53,6 +53,15 @@ If True, automatically tries the same model on other providers if the primary pr
 **`tools`** (Optional[Tools] = None)  
 Function calling tools available to the model. See [Tools documentation](tools.md).
 
+**`tool_choice`** (Optional[Union[str, Dict[str, Any]]] = None)  
+Controls how the model uses tools. Options:
+
+- `None` or `"auto"`: Model decides whether to use tools (default)
+- `"any"`: Model must use one of the provided tools
+- `"none"`: Model is prevented from using tools
+- `str` (tool name): Force the model to use a specific tool
+- `dict`: Provider-specific format for advanced control
+
 ### Provider-Specific Parameters
 
 **`anthropic_kwargs`** (dict = {})  
@@ -204,7 +213,54 @@ weather_tool = ToolCall(
 function_config = LLM(
     model_name="claude-sonnet-4",
     provider="anthropic",
-    tools=Tools(tools=[weather_tool])
+    tools=Tools(tools=[weather_tool]),
+    tool_choice="auto"  # Optional: control tool usage
+)
+```
+
+### Tool Choice Configuration
+
+Control when and how tools are used:
+
+```python
+# Force a specific tool
+force_weather = LLM(
+    model_name="claude-sonnet-4",
+    provider="anthropic", 
+    tools=Tools(tools=[weather_tool, calculator_tool]),
+    tool_choice="get_weather"  # Force weather tool
+)
+
+# Require any tool usage
+require_tools = LLM(
+    model_name="gpt-4o",
+    provider="openai",
+    tools=Tools(tools=[weather_tool, calculator_tool]),
+    tool_choice="any"  # Must use one of the tools
+)
+
+# Disable tool usage
+no_tools = LLM(
+    model_name="gemini-1.5-pro",
+    provider="google",
+    tools=Tools(tools=[weather_tool, calculator_tool]),
+    tool_choice="none"  # Prevent tool usage
+)
+
+# Provider-specific format (Anthropic)
+anthropic_specific = LLM(
+    model_name="claude-sonnet-4",
+    provider="anthropic",
+    tools=Tools(tools=[calculator_tool]),
+    tool_choice={"type": "tool", "name": "calculator"}
+)
+
+# Provider-specific format (OpenAI)
+openai_specific = LLM(
+    model_name="gpt-4o",
+    provider="openai", 
+    tools=Tools(tools=[calculator_tool]),
+    tool_choice={"type": "function", "function": {"name": "calculator"}}
 )
 ```
 

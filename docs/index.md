@@ -10,7 +10,7 @@ A unified LLM interface that provides automatic fallback between different LLM p
 
 - **⚡ Smart Routing**: Intelligent model selection based on availability and configuration. Automatic model name mapping across providers. [See provider configuration →](getting-started/configuration.md)
 
-- **🛠️ Function Calling**: Unified tool calling interface across all providers. Use the same function definitions everywhere. [Function calling guide →](guide/function-calling.md)
+- **🛠️ Function Calling**: Unified tool calling interface across all providers. Use the same function definitions everywhere. Control tool usage with force, disable, or auto modes. [Function calling guide →](guide/function-calling.md)
 
 - **🖼️ Multimodal Support**: Send images and PDFs with automatic format conversion. Support for vision models across all providers. [Multimodal examples →](getting-started/quick-start.md)
 
@@ -79,7 +79,7 @@ Ready to get started? Follow our quick start guide:
 ## Development Roadmap
 
 - [x] **Chat Completions**: Unified interface across providers 
-- [x] **Function Calling**: Tool calling support 
+- [x] **Function Calling**: Tool calling support with force/disable/auto modes
 - [x] **Multimodal Support**: Images, PDFs, and document processing
 - [ ] **Streaming**: Real-time response streaming
 - [ ] **AWS Bedrock**: Additional provider support

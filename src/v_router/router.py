@@ -174,6 +174,14 @@ class Router:
                 if backup_model.tools is None and self.primary_config.tools is not None:
                     backup_model_with_tools = backup_model.model_copy()
                     backup_model_with_tools.tools = self.primary_config.tools
+                    # Also inherit tool_choice if backup doesn't have it
+                    if (
+                        backup_model.tool_choice is None
+                        and self.primary_config.tool_choice is not None
+                    ):
+                        backup_model_with_tools.tool_choice = (
+                            self.primary_config.tool_choice
+                        )
                     return await self._try_provider(
                         backup_model_with_tools, messages, **kwargs
                     )
@@ -200,6 +208,7 @@ class Router:
                         max_tokens=self.primary_config.max_tokens,
                         temperature=self.primary_config.temperature,
                         tools=self.primary_config.tools,
+                        tool_choice=self.primary_config.tool_choice,
                     )
                     return await self._try_provider(alt_config, messages, **kwargs)
                 except Exception as e:
@@ -232,6 +241,7 @@ class Router:
             "max_tokens": llm_config.max_tokens,
             "temperature": llm_config.temperature,
             "tools": llm_config.tools,
+            "tool_choice": llm_config.tool_choice,
             **kwargs,
         }
 

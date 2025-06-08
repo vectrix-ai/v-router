@@ -95,3 +95,6 @@ When adding a new provider:
 ## Development Guidelines
 
 - Don't use relative imports unless absolutely needed, try to use absolute ones
+
+## Memories
+- Remember that we use mkdocs in a docs directory if I ask to write documentation

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -63,6 +63,17 @@ class LLM(BaseModel):
     tools: Optional[Tools] = Field(
         None,
         description="Tools/functions that can be called by the model.",
+    )
+    tool_choice: Optional[Union[str, Dict[str, Any]]] = Field(
+        None,
+        description=(
+            "Controls how the model uses tools. Can be:\n"
+            "- None or 'auto': Model decides whether to use tools (default)\n"
+            "- 'any': Model must use one of the provided tools\n"
+            "- 'none': Model is prevented from using tools\n"
+            "- str (tool name): Force the model to use a specific tool\n"
+            "- dict: Provider-specific format for advanced control"
+        ),
     )
 
     @field_validator("backup_models")

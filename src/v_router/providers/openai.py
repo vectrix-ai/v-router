@@ -1,6 +1,6 @@
 import json
 import os
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 
@@ -32,6 +32,7 @@ class OpenAIProvider(BaseProvider):
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         tools: Optional[Tools] = None,
+        tool_choice: Optional[Any] = None,
         **kwargs,
     ) -> Response:
         """Create a message using OpenAI's API."""
@@ -61,6 +62,12 @@ class OpenAIProvider(BaseProvider):
         # Add tools if provided
         if tools:
             params["tools"] = self._convert_tools_to_openai_format(tools)
+
+            # Add tool_choice if provided
+            if tool_choice is not None:
+                params["tool_choice"] = self._convert_tool_choice_to_openai_format(
+                    tool_choice
+                )
 
         # Add any additional kwargs
         params.update(kwargs)
@@ -144,6 +151,24 @@ class OpenAIProvider(BaseProvider):
                 }
             )
         return openai_tools
+
+    def _convert_tool_choice_to_openai_format(self, tool_choice):
+        """Convert tool_choice to OpenAI format."""
+        if isinstance(tool_choice, dict):
+            # Already in provider-specific format
+            return tool_choice
+        elif tool_choice == "auto":
+            return "auto"
+        elif tool_choice == "any":
+            return "required"
+        elif tool_choice == "none":
+            return "none"
+        elif isinstance(tool_choice, str):
+            # Tool name specified
+            return {"type": "function", "function": {"name": tool_choice}}
+        else:
+            # Default to auto
+            return "auto"
 
     def _convert_content_to_openai_format(self, content):
         """Convert message content to OpenAI format."""
@@ -229,6 +254,7 @@ class AzureOpenAIProvider(BaseProvider):
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         tools: Optional[Tools] = None,
+        tool_choice: Optional[Any] = None,
         **kwargs,
     ) -> Response:
         """Create a message using Azure OpenAI's API.
@@ -262,6 +288,12 @@ class AzureOpenAIProvider(BaseProvider):
         # Add tools if provided
         if tools:
             params["tools"] = self._convert_tools_to_openai_format(tools)
+
+            # Add tool_choice if provided
+            if tool_choice is not None:
+                params["tool_choice"] = self._convert_tool_choice_to_openai_format(
+                    tool_choice
+                )
 
         # Add any additional kwargs
         params.update(kwargs)
@@ -345,6 +377,24 @@ class AzureOpenAIProvider(BaseProvider):
                 }
             )
         return openai_tools
+
+    def _convert_tool_choice_to_openai_format(self, tool_choice):
+        """Convert tool_choice to OpenAI format."""
+        if isinstance(tool_choice, dict):
+            # Already in provider-specific format
+            return tool_choice
+        elif tool_choice == "auto":
+            return "auto"
+        elif tool_choice == "any":
+            return "required"
+        elif tool_choice == "none":
+            return "none"
+        elif isinstance(tool_choice, str):
+            # Tool name specified
+            return {"type": "function", "function": {"name": tool_choice}}
+        else:
+            # Default to auto
+            return "auto"
 
     def _convert_content_to_openai_format(self, content):
         """Convert message content to OpenAI format."""

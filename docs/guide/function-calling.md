@@ -2,6 +2,14 @@
 
 v-router provides unified function calling (tool use) across all providers. Define your tools once and use them with any LLM, whether it's Anthropic's Claude, OpenAI's GPT models, or Google's Gemini.
 
+## Key Features
+
+- **Unified Tool Interface**: Same tool definitions work across all providers
+- **Tool Choice Control**: Force specific tools, require any tool, or disable tools entirely
+- **Type-Safe Schemas**: Use Pydantic models for robust tool parameter validation
+- **Automatic Tool Inheritance**: Backup models inherit tools and tool_choice from primary configuration
+- **Consistent Response Format**: Same tool response structure across all providers
+
 ## Quick Start
 
 Here's a simple example that works across all providers:
@@ -153,6 +161,139 @@ llm_config = LLM(
     provider="openai",
     tools=Tools(tools=[file_tool, email_tool, math_tool])
 )
+```
+
+## Controlling Tool Usage with tool_choice
+
+v-router provides fine-grained control over when and how tools are used through the `tool_choice` parameter:
+
+### Tool Choice Options
+
+- **`None` or `"auto"`** (default): Model decides whether to use tools
+- **`"any"`**: Model must use one of the provided tools  
+- **`"none"`**: Model is prevented from using tools
+- **`str` (tool name)**: Force the model to use a specific tool
+- **`dict`**: Provider-specific format for advanced control
+
+### Force a Specific Tool
+
+When you want to guarantee that a specific tool is used:
+
+```python
+from v_router import Client, LLM
+from v_router.classes.tools import Tools
+
+llm_config = LLM(
+    model_name="claude-sonnet-4",
+    provider="anthropic",
+    tools=Tools(tools=[weather_tool, calculator_tool]),
+    tool_choice="get_weather"  # Force this specific tool
+)
+
+client = Client(llm_config)
+
+# Even for non-weather queries, the weather tool will be forced
+response = await client.messages.create(
+    messages=[{"role": "user", "content": "Hello! Can you help me with math?"}]
+)
+```
+
+### Require Any Tool Usage
+
+When you want to ensure the model uses one of the available tools:
+
+```python
+llm_config = LLM(
+    model_name="gpt-4o",
+    provider="openai",
+    tools=Tools(tools=[weather_tool, calculator_tool, search_tool]),
+    tool_choice="any"  # Must use one of the provided tools
+)
+
+# The model will choose the most appropriate tool from those available
+```
+
+### Disable Tool Usage
+
+When you want to prevent the model from using tools:
+
+```python
+llm_config = LLM(
+    model_name="gemini-1.5-pro",
+    provider="google",
+    tools=Tools(tools=[weather_tool, calculator_tool]),  # Tools available but...
+    tool_choice="none"  # ...model prevented from using them
+)
+
+# Model will provide text-only responses
+```
+
+### Auto Mode (Default)
+
+The default behavior where the model intelligently decides:
+
+```python
+llm_config = LLM(
+    model_name="claude-sonnet-4",
+    provider="anthropic",
+    tools=Tools(tools=[weather_tool, calculator_tool]),
+    tool_choice="auto"  # Explicit auto mode (same as None or not specified)
+)
+
+# Model will use tools when appropriate, ignore them when not needed
+```
+
+### Provider-Specific Formats
+
+For advanced control, use provider-native formats:
+
+=== "Anthropic"
+
+    ```python
+    llm_config = LLM(
+        model_name="claude-sonnet-4",
+        provider="anthropic",
+        tools=Tools(tools=[calculator_tool]),
+        tool_choice={"type": "tool", "name": "calculator"}
+    )
+    ```
+
+=== "OpenAI"
+
+    ```python
+    llm_config = LLM(
+        model_name="gpt-4o",
+        provider="openai",
+        tools=Tools(tools=[calculator_tool]),
+        tool_choice={"type": "function", "function": {"name": "calculator"}}
+    )
+    ```
+
+### Tool Choice with Fallbacks
+
+The `tool_choice` parameter works seamlessly with fallback models:
+
+```python
+from v_router import BackupModel
+
+llm_config = LLM(
+    model_name="claude-primary",
+    provider="anthropic",
+    tools=Tools(tools=[calculator_tool, weather_tool]),
+    tool_choice="calculator",  # Force calculator tool
+    backup_models=[
+        BackupModel(
+            model=LLM(
+                model_name="gpt-4o",
+                provider="openai"
+                # tools and tool_choice inherited from primary
+            ),
+            priority=1
+        )
+    ]
+)
+
+# Backup models inherit the forced tool behavior
 ```
 
 ## Tool Execution Loop
