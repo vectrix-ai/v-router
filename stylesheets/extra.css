@@ -1,0 +1,64 @@
+/* Custom styles for v-router documentation */
+
+/* Feature section styling */
+.md-typeset h3 {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: var(--md-primary-fg-color);
+}
+
+/* Button styling */
+.md-button {
+    display: inline-block;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Grid layout for cards (fallback) */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.grid.cards > * {
+    background: var(--md-code-bg-color);
+    border: 0.05rem solid var(--md-default-fg-color--lightest);
+    border-radius: 0.2rem;
+    padding: 1rem;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Enhanced code blocks */
+.highlight {
+    margin: 1rem 0;
+}
+
+/* Table styling improvements */
+.md-typeset table:not([class]) {
+    border: 0.05rem solid var(--md-typeset-table-color);
+    border-radius: 0.2rem;
+}
+
+.md-typeset table:not([class]) th {
+    background-color: var(--md-default-fg-color--lightest);
+    font-weight: 700;
+}
+
+/* Provider comparison table */
+.md-typeset table tbody tr:hover {
+    background-color: var(--md-accent-fg-color--transparent);
+}
+
+/* Navigation improvements */
+.md-nav__item--active > .md-nav__link {
+    color: var(--md-primary-fg-color);
+    font-weight: 700;
+}
