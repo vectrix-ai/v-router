@@ -5,6 +5,7 @@ v-router provides unified function calling (tool use) across all providers. Defi
 ## Key Features
 
 - **Unified Tool Interface**: Same tool definitions work across all providers
+- **Flexible Tool Configuration**: Pass tools as a list or Tools object
 - **Tool Choice Control**: Force specific tools, require any tool, or disable tools entirely
 - **Type-Safe Schemas**: Use Pydantic models for robust tool parameter validation
 - **Automatic Tool Inheritance**: Backup models inherit tools and tool_choice from primary configuration
@@ -37,8 +38,11 @@ async def main():
     llm_config = LLM(
         model_name="claude-sonnet-4",
         provider="anthropic",
-        tools=Tools(tools=[weather_tool])
+        tools=[weather_tool]  # Pass tools as a list
     )
+    
+    # Alternative syntax (also works):
+    # tools=Tools(tools=[weather_tool])
     
     client = Client(llm_config)
     
@@ -65,6 +69,28 @@ async def main():
 
 asyncio.run(main())
 ```
+
+## Tool Configuration Options
+
+v-router supports flexible tool configuration for your LLM:
+
+### Direct List Syntax
+
+```python
+# Pass tools directly as a list
+tools=[tool1, tool2, tool3]
+```
+
+### Tools Object Syntax
+
+```python
+# Wrap tools in a Tools object
+tools=Tools(tools=[tool1, tool2, tool3])
+```
+
+### Compatibility
+
+Both syntaxes work identically and can be used interchangeably. When you pass a list of `ToolCall` objects, v-router automatically wraps them in a `Tools` object internally, ensuring all validation and functionality remains exactly the same.
 
 ## Tool Definition
 
@@ -159,8 +185,11 @@ math_tool = ToolCall(
 llm_config = LLM(
     model_name="gpt-4o",
     provider="openai",
-    tools=Tools(tools=[file_tool, email_tool, math_tool])
+    tools=[file_tool, email_tool, math_tool]  # Pass as list
 )
+
+# Alternative syntax:
+# tools=Tools(tools=[file_tool, email_tool, math_tool])
 ```
 
 ## Controlling Tool Usage with tool_choice
@@ -186,7 +215,7 @@ from v_router.classes.tools import Tools
 llm_config = LLM(
     model_name="claude-sonnet-4",
     provider="anthropic",
-    tools=Tools(tools=[weather_tool, calculator_tool]),
+    tools=[weather_tool, calculator_tool],
     tool_choice="get_weather"  # Force this specific tool
 )
 
@@ -206,7 +235,7 @@ When you want to ensure the model uses one of the available tools:
 llm_config = LLM(
     model_name="gpt-4o",
     provider="openai",
-    tools=Tools(tools=[weather_tool, calculator_tool, search_tool]),
+    tools=[weather_tool, calculator_tool, search_tool],
     tool_choice="any"  # Must use one of the provided tools
 )
 
@@ -221,7 +250,7 @@ When you want to prevent the model from using tools:
 llm_config = LLM(
     model_name="gemini-1.5-pro",
     provider="google",
-    tools=Tools(tools=[weather_tool, calculator_tool]),  # Tools available but...
+    tools=[weather_tool, calculator_tool],  # Tools available but...
     tool_choice="none"  # ...model prevented from using them
 )
 
@@ -236,7 +265,7 @@ The default behavior where the model intelligently decides:
 llm_config = LLM(
     model_name="claude-sonnet-4",
     provider="anthropic",
-    tools=Tools(tools=[weather_tool, calculator_tool]),
+    tools=[weather_tool, calculator_tool],
     tool_choice="auto"  # Explicit auto mode (same as None or not specified)
 )
 
@@ -253,7 +282,7 @@ For advanced control, use provider-native formats:
     llm_config = LLM(
         model_name="claude-sonnet-4",
         provider="anthropic",
-        tools=Tools(tools=[calculator_tool]),
+        tools=[calculator_tool],
         tool_choice={"type": "tool", "name": "calculator"}
     )
     ```
@@ -264,7 +293,7 @@ For advanced control, use provider-native formats:
     llm_config = LLM(
         model_name="gpt-4o",
         provider="openai",
-        tools=Tools(tools=[calculator_tool]),
+        tools=[calculator_tool],
         tool_choice={"type": "function", "function": {"name": "calculator"}}
     )
     ```
@@ -279,7 +308,7 @@ from v_router import BackupModel
 llm_config = LLM(
     model_name="claude-primary",
     provider="anthropic",
-    tools=Tools(tools=[calculator_tool, weather_tool]),
+    tools=[calculator_tool, weather_tool],
     tool_choice="calculator",  # Force calculator tool
     backup_models=[
         BackupModel(
@@ -353,7 +382,7 @@ async def chat_with_tools():
     llm_config = LLM(
         model_name="claude-sonnet-4",
         provider="anthropic",
-        tools=Tools(tools=[calc_tool, search_tool])
+        tools=[calc_tool, search_tool]
     )
     
     client = Client(llm_config)
@@ -406,7 +435,7 @@ All function calling features work across providers:
     llm_config = LLM(
         model_name="claude-sonnet-4",
         provider="anthropic",
-        tools=Tools(tools=[your_tool])
+        tools=[your_tool]
     )
     ```
 
@@ -416,7 +445,7 @@ All function calling features work across providers:
     llm_config = LLM(
         model_name="gpt-4o",
         provider="openai", 
-        tools=Tools(tools=[your_tool])
+        tools=[your_tool]
     )
     ```
 
@@ -426,7 +455,7 @@ All function calling features work across providers:
     llm_config = LLM(
         model_name="gemini-1.5-pro",
         provider="google",
-        tools=Tools(tools=[your_tool])
+        tools=[your_tool]
     )
     ```
 
@@ -437,7 +466,7 @@ All function calling features work across providers:
     llm_config = LLM(
         model_name="claude-sonnet-4",
         provider="vertexai",
-        tools=Tools(tools=[your_tool])
+        tools=[your_tool]
     )
     ```
 
@@ -460,12 +489,15 @@ def get_tools_for_user(user_role: str) -> Tools:
     return Tools(tools=base_tools)
 
 # Use conditional tools
-user_tools = get_tools_for_user("admin")
+user_tools = get_tools_for_user("admin")  # Returns Tools object
 llm_config = LLM(
     model_name="claude-sonnet-4",
     provider="anthropic",
-    tools=user_tools
+    tools=user_tools  # Works with Tools object or list of ToolCall
 )
+
+# Or pass the tools list directly:
+# tools=get_tools_for_user("admin").tools
 ```
 
 ### Tool Chaining

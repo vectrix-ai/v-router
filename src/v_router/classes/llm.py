@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field, field_validator
 
-from .tools import Tools
+from .tools import ToolCall, Tools
 
 
 class BackupModel(BaseModel):
@@ -62,7 +62,7 @@ class LLM(BaseModel):
     )
     tools: Optional[Tools] = Field(
         None,
-        description="Tools/functions that can be called by the model.",
+        description="Tools/functions that can be called by the model. Can be a Tools object or a list of ToolCall objects.",
     )
     tool_choice: Optional[Union[str, Dict[str, Any]]] = Field(
         None,
@@ -75,6 +75,27 @@ class LLM(BaseModel):
             "- dict: Provider-specific format for advanced control"
         ),
     )
+
+    @field_validator("tools", mode="before")
+    @classmethod
+    def validate_tools(cls, v):
+        """Validate and normalize tools parameter."""
+        if v is None:
+            return None
+        
+        # If it's already a Tools object, return as-is
+        if isinstance(v, Tools):
+            return v
+        
+        # If it's a list of ToolCall objects, wrap in Tools
+        if isinstance(v, list):
+            # Validate that all items are ToolCall instances
+            for item in v:
+                if not isinstance(item, ToolCall):
+                    raise ValueError(f"All items in tools list must be ToolCall instances, got {type(item)}")
+            return Tools(tools=v)
+        
+        raise ValueError(f"tools must be either a Tools object or a list of ToolCall objects, got {type(v)}")
 
     @field_validator("backup_models")
     @classmethod
