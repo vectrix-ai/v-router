@@ -62,6 +62,8 @@ jobs:
           # Update site_url in mkdocs.yml for GitHub Pages
           sed -i "s|site_url: https://vectrix-ai.github.io/v-router|site_url: ${{ steps.pages.outputs.base_url }}|g" mkdocs.yml
           uv run mkdocs build --clean --verbose
+          # Add .nojekyll file to prevent GitHub Pages from using Jekyll
+          touch site/.nojekyll
         env:
           # Set the site URL for proper canonical URLs
           SITE_URL: ${{ steps.pages.outputs.base_url }}
