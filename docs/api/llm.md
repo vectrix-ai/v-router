@@ -464,6 +464,153 @@ llm_config = LLM(
 client = Client(llm_config)
 ```
 
+## Provider-Specific Parameters
+
+v-router uses a two-tier parameter system to support provider-specific features:
+
+- **Core parameters**: Defined in the `LLM` class (model_name, provider, max_tokens, temperature, etc.)
+- **Provider-specific parameters**: Passed via `**kwargs` when creating messages
+
+This design allows you to use provider-specific features without modifying the core LLM class.
+
+### How to Use Provider-Specific Parameters
+
+Provider-specific parameters are passed when creating messages, NOT in the LLM configuration:
+
+```python
+from v_router import Client, LLM
+
+# 1. Configure core parameters in LLM
+client = Client(
+    llm_config=LLM(
+        model_name="claude-opus-4-20250514",
+        provider="anthropic",
+        max_tokens=32000,
+        temperature=1
+    )
+)
+
+# 2. Pass provider-specific parameters when creating messages
+response = await client.messages.create(
+    messages=[{"role": "user", "content": "Solve this complex problem"}],
+    # Provider-specific parameters as kwargs:
+    timeout=600,  # Anthropic timeout parameter
+    thinking={    # Anthropic thinking parameter
+        "type": "enabled",
+        "budget_tokens": 10000
+    }
+)
+```
+
+### Common Provider-Specific Parameters
+
+#### Anthropic
+```python
+# Extended timeout for long responses
+response = await client.messages.create(
+    messages=[...],
+    timeout=600  # 10 minutes timeout
+)
+
+# Thinking mode (Claude Opus 4)
+response = await client.messages.create(
+    messages=[...],
+    thinking={
+        "type": "enabled",
+        "budget_tokens": 10000
+    }
+)
+
+# Top-k sampling
+response = await client.messages.create(
+    messages=[...],
+    top_k=40
+)
+```
+
+#### OpenAI
+```python
+# Response format
+response = await client.messages.create(
+    messages=[...],
+    response_format={"type": "json_object"}
+)
+
+# Frequency penalty
+response = await client.messages.create(
+    messages=[...],
+    frequency_penalty=0.5,
+    presence_penalty=0.5
+)
+
+# Seed for reproducibility
+response = await client.messages.create(
+    messages=[...],
+    seed=12345
+)
+```
+
+#### Google/Vertex AI
+```python
+# Safety settings
+response = await client.messages.create(
+    messages=[...],
+    safety_settings=[
+        {
+            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+            "threshold": "BLOCK_ONLY_HIGH"
+        }
+    ]
+)
+
+# Candidate count
+response = await client.messages.create(
+    messages=[...],
+    candidate_count=3
+)
+```
+
+### Why This Design?
+
+1. **Flexibility**: New provider features can be used immediately without updating v-router
+2. **Forward Compatibility**: Providers can add new parameters without breaking existing code
+3. **Clean Separation**: Core routing logic is separate from provider-specific features
+4. **Type Safety**: Core parameters remain type-checked while allowing provider flexibility
+
+### Examples with Fallback Models
+
+Provider-specific parameters work seamlessly with fallback models:
+
+```python
+# Primary model with provider-specific params
+llm_config = LLM(
+    model_name="claude-opus-4-20250514",
+    provider="anthropic",
+    max_tokens=10000,
+    backup_models=[
+        BackupModel(
+            model=LLM(model_name="gpt-4o", provider="openai"),
+            priority=1
+        )
+    ]
+)
+
+client = Client(llm_config)
+
+# Provider-specific params are passed to whichever model handles the request
+response = await client.messages.create(
+    messages=[{"role": "user", "content": "Complex analysis"}],
+    # These params will be used by Anthropic if available,
+    # ignored by OpenAI if it falls back
+    timeout=600,
+    thinking={"type": "enabled", "budget_tokens": 5000},
+    # These params will be used by OpenAI if it falls back,
+    # ignored by Anthropic
+    seed=12345,
+    frequency_penalty=0.2
+)
+```
+
 ## Methods
 
 ### `get_ordered_backup_models() -> List[LLM]`

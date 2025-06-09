@@ -202,6 +202,140 @@ LLM(model_name="gpt-4-turbo-preview", provider="openai")
 LLM(model_name="gemini-1.5-pro-latest", provider="google")
 ```
 
+## Provider-Specific Parameters
+
+v-router supports provider-specific parameters through a two-tier system:
+
+1. **Core parameters** (in LLM class): Used for routing and fallback logic
+2. **Provider-specific parameters** (via kwargs): Passed directly to providers
+
+### How to Pass Provider-Specific Parameters
+
+Provider-specific parameters should be passed when creating messages, NOT in the LLM configuration:
+
+```python
+from v_router import Client, LLM
+
+# Configure core parameters
+client = Client(
+    llm_config=LLM(
+        model_name="claude-opus-4-20250514",
+        provider="anthropic",
+        max_tokens=32000,
+        temperature=1
+    )
+)
+
+# Pass provider-specific parameters at message creation
+response = await client.messages.create(
+    messages=[{"role": "user", "content": "Solve this complex problem"}],
+    # Provider-specific parameters:
+    timeout=600,  # Anthropic: extended timeout
+    thinking={    # Anthropic: thinking mode
+        "type": "enabled",
+        "budget_tokens": 10000
+    }
+)
+```
+
+### Common Provider-Specific Parameters
+
+#### Anthropic
+```python
+# Extended timeout for long-running requests
+response = await client.messages.create(
+    messages=[...],
+    timeout=600  # 10 minutes
+)
+
+# Thinking mode (Claude Opus 4)
+response = await client.messages.create(
+    messages=[...],
+    thinking={
+        "type": "enabled",
+        "budget_tokens": 10000
+    }
+)
+
+# Top-k sampling
+response = await client.messages.create(
+    messages=[...],
+    top_k=40
+)
+```
+
+#### OpenAI
+```python
+# JSON mode
+response = await client.messages.create(
+    messages=[...],
+    response_format={"type": "json_object"}
+)
+
+# Frequency and presence penalties
+response = await client.messages.create(
+    messages=[...],
+    frequency_penalty=0.5,
+    presence_penalty=0.5
+)
+
+# Reproducible outputs
+response = await client.messages.create(
+    messages=[...],
+    seed=12345
+)
+```
+
+#### Google/Vertex AI
+```python
+# Safety settings
+response = await client.messages.create(
+    messages=[...],
+    safety_settings=[
+        {
+            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+            "threshold": "BLOCK_ONLY_HIGH"
+        }
+    ]
+)
+
+# Multiple candidates
+response = await client.messages.create(
+    messages=[...],
+    candidate_count=3
+)
+```
+
+### With Fallback Models
+
+Provider-specific parameters work seamlessly with fallbacks:
+
+```python
+llm_config = LLM(
+    model_name="claude-opus-4-20250514",
+    provider="anthropic",
+    backup_models=[
+        BackupModel(
+            model=LLM(model_name="gpt-4o", provider="openai"),
+            priority=1
+        )
+    ]
+)
+
+client = Client(llm_config)
+
+# These params are passed to whichever provider handles the request
+response = await client.messages.create(
+    messages=[{"role": "user", "content": "Analyze this"}],
+    # Anthropic params (used if primary succeeds)
+    timeout=600,
+    thinking={"type": "enabled"},
+    # OpenAI params (used if fallback occurs)
+    seed=12345,
+    frequency_penalty=0.2
+)
+```
+
 ## Provider-Specific Configuration
 
 ### Anthropic Configuration

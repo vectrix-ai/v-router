@@ -96,6 +96,41 @@ When adding a new provider:
 
 - Don't use relative imports unless absolutely needed, try to use absolute ones
 
+## Provider-Specific Parameters
+
+v-router uses a two-tier parameter system:
+
+1. **Core parameters** (in LLM class): `model_name`, `provider`, `max_tokens`, `temperature`, etc.
+   - Used for routing decisions and fallback logic
+   - Type-checked and validated
+
+2. **Provider-specific parameters** (via kwargs): `timeout`, `thinking`, `seed`, etc.
+   - Passed directly to provider SDKs
+   - Support provider-specific features without modifying core
+
+### Usage Pattern
+
+```python
+# Core parameters in LLM config
+client = Client(
+    llm_config=LLM(
+        model_name="claude-opus-4-20250514",
+        provider="anthropic",
+        max_tokens=32000,
+        temperature=1
+    )
+)
+
+# Provider-specific params at message creation
+response = await client.messages.create(
+    messages=[{"role": "user", "content": "Hello"}],
+    timeout=600,  # Anthropic-specific
+    thinking={"type": "enabled", "budget_tokens": 10000}  # Anthropic-specific
+)
+```
+
+This design allows v-router to support new provider features without code changes.
+
 ## Memories
 - Remember that we use mkdocs in a docs directory if I ask to write documentation
 - We use Material for MkDocs, it should be built using GitHub Actions with this workflow:

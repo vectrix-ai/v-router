@@ -101,6 +101,68 @@ response = await client.messages.create(
 )
 ```
 
+## 🎯 Provider-Specific Parameters
+
+v-router supports provider-specific features through a flexible parameter system:
+
+```python
+from v_router import Client, LLM
+
+# Configure core routing parameters
+client = Client(
+    llm_config=LLM(
+        model_name="claude-opus-4-20250514",
+        provider="anthropic",
+        max_tokens=32000,
+        temperature=1
+    )
+)
+
+# Pass provider-specific parameters at message creation
+response = await client.messages.create(
+    messages=[{"role": "user", "content": "Solve this complex problem"}],
+    # Provider-specific parameters:
+    timeout=600,              # Anthropic: extended timeout
+    thinking={                # Anthropic: thinking mode
+        "type": "enabled",
+        "budget_tokens": 10000
+    }
+)
+```
+
+### Examples by Provider
+
+**Anthropic** - Thinking mode, timeouts:
+```python
+response = await client.messages.create(
+    messages=[...],
+    timeout=600,
+    thinking={"type": "enabled", "budget_tokens": 10000},
+    top_k=40
+)
+```
+
+**OpenAI** - JSON mode, penalties:
+```python
+response = await client.messages.create(
+    messages=[...],
+    response_format={"type": "json_object"},
+    frequency_penalty=0.5,
+    seed=12345
+)
+```
+
+**Google** - Safety settings:
+```python
+response = await client.messages.create(
+    messages=[...],
+    safety_settings=[{
+        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+        "threshold": "BLOCK_ONLY_HIGH"
+    }]
+)
+```
+
 ## 🔧 Function Calling
 
 v-router provides unified function calling across all providers:
