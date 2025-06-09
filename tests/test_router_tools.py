@@ -37,7 +37,7 @@ class TestRouterToolInheritance:
         """Test router initialization with tools."""
         tools = self._create_mock_tools()
         llm_config = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai",
             tools=tools
         )
@@ -71,7 +71,7 @@ class TestRouterToolInheritance:
         )
         
         primary_config = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai",
             tools=primary_tools,
             backup_models=[
@@ -103,7 +103,7 @@ class TestRouterToolInheritance:
             backup_models=[
                 BackupModel(
                     model=LLM(
-                        model_name="gpt-4",
+                        model_name="gpt-4.1-nano",
                         provider="openai"
                         # No tools - should inherit from primary
                     ),
@@ -310,7 +310,7 @@ class TestClientToolIntegration:
         ])
         
         llm_config = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai",
             tools=tools,
             max_tokens=100
@@ -335,13 +335,13 @@ class TestClientToolIntegration:
         ])
         
         llm_config = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai",
             tools=primary_tools,
             backup_models=[
                 BackupModel(
                     model=LLM(
-                        model_name="claude-sonnet-3.5",
+                        model_name="claude-3-5-haiku",
                         provider="anthropic",
                         tools=backup_tools
                     ),
@@ -349,7 +349,7 @@ class TestClientToolIntegration:
                 ),
                 BackupModel(
                     model=LLM(
-                        model_name="gemini-pro",
+                        model_name="gemini-2.5-flash-preview",
                         provider="google"
                         # No tools - should inherit from primary
                     ),
@@ -402,7 +402,7 @@ class TestRealAPIToolCalling:
             backup_models=[
                 BackupModel(
                     model=LLM(
-                        model_name="gpt-4",
+                        model_name="gpt-4.1-nano",
                         provider="openai",
                         max_tokens=100
                         # No tools specified - should inherit
@@ -440,11 +440,11 @@ class TestRealAPIToolCalling:
         """Test that the same tools work consistently across different providers."""
         available_providers = []
         if os.getenv("ANTHROPIC_API_KEY"):
-            available_providers.append(("anthropic", "claude-sonnet-4-20250514"))
+            available_providers.append(("anthropic", "claude-3-5-haiku"))
         if os.getenv("OPENAI_API_KEY"):
-            available_providers.append(("openai", "gpt-4"))
+            available_providers.append(("openai", "gpt-4.1-nano"))
         if os.getenv("GEMINI_API_KEY"):
-            available_providers.append(("google", "gemini-1.5-pro"))
+            available_providers.append(("google", "gemini-2.5-flash-preview"))
         
         if len(available_providers) < 2:
             pytest.skip("Need at least 2 providers configured to test consistency")

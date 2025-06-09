@@ -130,7 +130,7 @@ class TestLLMWithTools:
         tools = Tools(tools=[tool])
         
         llm = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai",
             tools=tools
         )
@@ -142,7 +142,7 @@ class TestLLMWithTools:
     def test_llm_without_tools(self):
         """Test creating an LLM configuration without tools."""
         llm = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai"
         )
         
@@ -177,7 +177,7 @@ class TestLLMWithTools:
         )
         
         primary = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai",
             tools=primary_tools,
             backup_models=[backup_with_tools, backup_without_tools]
@@ -223,7 +223,7 @@ class TestToolCallingIntegration:
         
         tools = self._create_test_tools()
         llm_config = LLM(
-            model_name="claude-sonnet-4-20250514",
+            model_name="claude-3-5-haiku",
             provider="anthropic",
             tools=tools,
             max_tokens=200
@@ -253,7 +253,7 @@ class TestToolCallingIntegration:
         
         tools = self._create_test_tools()
         llm_config = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai",
             tools=tools,
             max_tokens=200
@@ -324,7 +324,7 @@ class TestToolCallingIntegration:
             backup_models=[
                 BackupModel(
                     model=LLM(
-                        model_name="gpt-4",
+                        model_name="gpt-4.1-nano",
                         provider="openai",
                         max_tokens=200
                         # Note: No tools specified - should inherit from primary
@@ -365,7 +365,7 @@ class TestToolCallingIntegration:
         
         # Use a model that might fail on vertex but work on anthropic
         llm_config = LLM(
-            model_name="claude-opus-4",
+            model_name="claude-3-5-haiku",
             provider="vertexai",  # This might fail due to quota/auth
             tools=tools,
             try_other_providers=True,
@@ -475,7 +475,7 @@ class TestToolCallingWithFixtures:
     async def test_llm_with_sample_tools(self, sample_tools):
         """Test creating LLM configuration with sample tools."""
         llm_config = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai",
             tools=sample_tools,
             max_tokens=100

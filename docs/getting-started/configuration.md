@@ -157,7 +157,7 @@ v-router automatically maps generic model names to provider-specific versions us
     # These all work across Anthropic and Vertex AI
     LLM(model_name="claude-3-opus", provider="anthropic")
     LLM(model_name="claude-3-sonnet", provider="anthropic") 
-    LLM(model_name="claude-3-haiku", provider="anthropic")
+    LLM(model_name="claude-3-5-haiku", provider="anthropic")
     LLM(model_name="claude-sonnet-4", provider="anthropic")
     LLM(model_name="claude-opus-4", provider="anthropic")
     

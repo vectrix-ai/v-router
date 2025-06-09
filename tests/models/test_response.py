@@ -127,7 +127,7 @@ class TestResponse:
             ],
             tool_use=[],
             usage=Usage(input_tokens=10, output_tokens=8),
-            model="gpt-4",
+            model="gpt-4.1-nano",
             provider="openai",
             raw_response={"test": "data"}
         )
@@ -137,7 +137,7 @@ class TestResponse:
         assert len(response.tool_use) == 0
         assert response.usage.input_tokens == 10
         assert response.usage.output_tokens == 8
-        assert response.model == "gpt-4"
+        assert response.model == "gpt-4.1-nano"
         assert response.provider == "openai"
         assert response.raw_response == {"test": "data"}
     
@@ -219,7 +219,7 @@ class TestResponse:
                 )
             ],
             usage=Usage(input_tokens=25, output_tokens=30),
-            model="gpt-4-turbo",
+            model="gpt-4.1-nano",
             provider="openai",
             raw_response={}
         )

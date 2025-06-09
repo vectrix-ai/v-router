@@ -10,7 +10,7 @@ class TestBackupModel:
     def test_backup_model_creation_valid(self):
         """Test creating a valid BackupModel."""
         primary_model = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai"
         )
         
@@ -19,14 +19,14 @@ class TestBackupModel:
             priority=1
         )
         
-        assert backup.model.model_name == "gpt-4"
+        assert backup.model.model_name == "gpt-4.1-nano"
         assert backup.model.provider == "openai"
         assert backup.priority == 1
     
     def test_backup_model_priority_validation_valid(self):
         """Test that valid priorities are accepted."""
         primary_model = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai"
         )
         
@@ -41,7 +41,7 @@ class TestBackupModel:
     def test_backup_model_priority_validation_invalid(self):
         """Test that invalid priorities are rejected."""
         primary_model = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai"
         )
         
@@ -61,11 +61,11 @@ class TestLLM:
     def test_llm_creation_minimal(self):
         """Test creating an LLM with minimal required fields."""
         llm = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai"
         )
         
-        assert llm.model_name == "gpt-4"
+        assert llm.model_name == "gpt-4.1-nano"
         assert llm.provider == "openai"
         assert llm.max_tokens is None
         assert llm.temperature == 0  # Default value
@@ -109,7 +109,7 @@ class TestLLM:
     def test_llm_with_single_backup(self):
         """Test LLM with a single backup model."""
         backup_model = LLM(
-            model_name="gpt-3.5-turbo",
+            model_name="gpt-4.1-nano",
             provider="openai"
         )
         
@@ -119,13 +119,13 @@ class TestLLM:
         )
         
         primary = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai",
             backup_models=[backup]
         )
         
         assert len(primary.backup_models) == 1
-        assert primary.backup_models[0].model.model_name == "gpt-3.5-turbo"
+        assert primary.backup_models[0].model.model_name == "gpt-4.1-nano"
         assert primary.backup_models[0].priority == 1
     
     def test_llm_with_multiple_backups(self):
@@ -139,12 +139,12 @@ class TestLLM:
             priority=2
         )
         backup3 = BackupModel(
-            model=LLM(model_name="gpt-3.5-turbo", provider="openai"),
+            model=LLM(model_name="gpt-4.1-nano", provider="openai"),
             priority=3
         )
         
         primary = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai",
             backup_models=[backup1, backup2, backup3]
         )
@@ -165,13 +165,13 @@ class TestLLM:
             priority=3
         )
         backup3 = BackupModel(
-            model=LLM(model_name="gpt-3.5-turbo", provider="openai"),
+            model=LLM(model_name="gpt-4.1-nano", provider="openai"),
             priority=5
         )
         
         # Should not raise an exception
         llm = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai",
             backup_models=[backup1, backup2, backup3]
         )
@@ -191,7 +191,7 @@ class TestLLM:
         
         with pytest.raises(ValidationError) as exc_info:
             LLM(
-                model_name="gpt-4",
+                model_name="gpt-4.1-nano",
                 provider="openai",
                 backup_models=[backup1, backup2]
             )
@@ -209,13 +209,13 @@ class TestLLM:
             priority=1
         )
         backup3 = BackupModel(
-            model=LLM(model_name="gpt-3.5-turbo", provider="openai"),
+            model=LLM(model_name="gpt-4.1-nano", provider="openai"),
             priority=2  # Duplicate of backup1
         )
         
         with pytest.raises(ValidationError) as exc_info:
             LLM(
-                model_name="gpt-4",
+                model_name="gpt-4.1-nano",
                 provider="openai",
                 backup_models=[backup1, backup2, backup3]
             )
@@ -225,7 +225,7 @@ class TestLLM:
     def test_get_ordered_backup_models_empty(self):
         """Test get_ordered_backup_models with no backup models."""
         llm = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai"
         )
         
@@ -241,7 +241,7 @@ class TestLLM:
         )
         
         llm = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai",
             backup_models=[backup]
         )
@@ -262,12 +262,12 @@ class TestLLM:
             priority=2
         )
         backup3 = BackupModel(
-            model=LLM(model_name="gpt-3.5-turbo", provider="openai"),
+            model=LLM(model_name="gpt-4.1-nano", provider="openai"),
             priority=3
         )
         
         llm = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai",
             backup_models=[backup1, backup2, backup3]
         )
@@ -276,7 +276,7 @@ class TestLLM:
         assert len(ordered_backups) == 3
         assert ordered_backups[0].model_name == "claude-sonnet-3.5"  # Priority 1
         assert ordered_backups[1].model_name == "gemini-pro"         # Priority 2
-        assert ordered_backups[2].model_name == "gpt-3.5-turbo"     # Priority 3
+        assert ordered_backups[2].model_name == "gpt-4.1-nano"     # Priority 3
     
     def test_get_ordered_backup_models_multiple_unordered(self):
         """Test get_ordered_backup_models with models added out of priority order."""
@@ -289,13 +289,13 @@ class TestLLM:
             priority=1  # Lowest number, highest priority
         )
         backup3 = BackupModel(
-            model=LLM(model_name="gpt-3.5-turbo", provider="openai"),
+            model=LLM(model_name="gpt-4.1-nano", provider="openai"),
             priority=2
         )
         
         # Add them in non-priority order
         llm = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai",
             backup_models=[backup1, backup2, backup3]
         )
@@ -303,7 +303,7 @@ class TestLLM:
         ordered_backups = llm.get_ordered_backup_models()
         assert len(ordered_backups) == 3
         assert ordered_backups[0].model_name == "gemini-pro"         # Priority 1
-        assert ordered_backups[1].model_name == "gpt-3.5-turbo"     # Priority 2
+        assert ordered_backups[1].model_name == "gpt-4.1-nano"     # Priority 2
         assert ordered_backups[2].model_name == "claude-sonnet-3.5" # Priority 3
     
     def test_get_ordered_backup_models_large_priority_gaps(self):
@@ -317,19 +317,19 @@ class TestLLM:
             priority=5
         )
         backup3 = BackupModel(
-            model=LLM(model_name="gpt-3.5-turbo", provider="openai"),
+            model=LLM(model_name="gpt-4.1-nano", provider="openai"),
             priority=1
         )
         
         llm = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai",
             backup_models=[backup1, backup2, backup3]
         )
         
         ordered_backups = llm.get_ordered_backup_models()
         assert len(ordered_backups) == 3
-        assert ordered_backups[0].model_name == "gpt-3.5-turbo"     # Priority 1
+        assert ordered_backups[0].model_name == "gpt-4.1-nano"     # Priority 1
         assert ordered_backups[1].model_name == "gemini-pro"        # Priority 5
         assert ordered_backups[2].model_name == "claude-sonnet-3.5" # Priority 100
 
@@ -341,7 +341,7 @@ class TestLLMSelfReference:
         """Test LLM with backup models that themselves have backup models."""
         # Create a deep backup model
         deep_backup = LLM(
-            model_name="gpt-3.5-turbo",
+            model_name="gpt-4.1-nano",
             provider="openai"
         )
         
@@ -356,7 +356,7 @@ class TestLLMSelfReference:
         
         # Create a primary model with nested backups
         primary = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai",
             backup_models=[
                 BackupModel(model=mid_backup, priority=1)
@@ -364,7 +364,7 @@ class TestLLMSelfReference:
         )
         
         # Verify the structure
-        assert primary.model_name == "gpt-4"
+        assert primary.model_name == "gpt-4.1-nano"
         assert len(primary.backup_models) == 1
         
         first_backup = primary.backup_models[0].model
@@ -372,13 +372,13 @@ class TestLLMSelfReference:
         assert len(first_backup.backup_models) == 1
         
         second_backup = first_backup.backup_models[0].model
-        assert second_backup.model_name == "gpt-3.5-turbo"
+        assert second_backup.model_name == "gpt-4.1-nano"
         assert len(second_backup.backup_models) == 0
     
     def test_llm_complex_nested_structure(self):
         """Test a complex nested backup structure with multiple levels."""
         # Level 3 models (deepest)
-        level3_model1 = LLM(model_name="gpt-3.5-turbo", provider="openai")
+        level3_model1 = LLM(model_name="gpt-4.1-nano", provider="openai")
         level3_model2 = LLM(model_name="gemini-pro", provider="google")
         
         # Level 2 models with their own backups
@@ -401,7 +401,7 @@ class TestLLMSelfReference:
         
         # Level 1 (primary) model
         primary = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai",
             backup_models=[
                 BackupModel(model=level2_model1, priority=1),
@@ -434,7 +434,7 @@ class TestLLMEdgeCases:
         
         # Missing provider
         with pytest.raises(ValidationError):
-            LLM(model_name="gpt-4")
+            LLM(model_name="gpt-4.1-nano")
         
         # Missing both
         with pytest.raises(ValidationError):
@@ -445,7 +445,7 @@ class TestLLMEdgeCases:
         # Valid temperatures
         for temp in [0.0, 0.5, 1.0, 1.5, 2.0]:
             llm = LLM(
-                model_name="gpt-4",
+                model_name="gpt-4.1-nano",
                 provider="openai",
                 temperature=temp
             )
@@ -456,7 +456,7 @@ class TestLLMEdgeCases:
         # Valid max_tokens
         for tokens in [None, 1, 100, 4000, 8000]:
             llm = LLM(
-                model_name="gpt-4",
+                model_name="gpt-4.1-nano",
                 provider="openai",
                 max_tokens=tokens
             )
@@ -464,7 +464,7 @@ class TestLLMEdgeCases:
     
     def test_backup_model_missing_required_fields(self):
         """Test that BackupModel requires both model and priority."""
-        primary_model = LLM(model_name="gpt-4", provider="openai")
+        primary_model = LLM(model_name="gpt-4.1-nano", provider="openai")
         
         # Missing priority
         with pytest.raises(ValidationError):
@@ -486,7 +486,7 @@ class TestLLMUsagePatterns:
         """Test a realistic fallback chain for production use."""
         # Create a realistic fallback configuration
         primary = LLM(
-            model_name="gpt-4-turbo",
+            model_name="gpt-4.1-nano",
             provider="openai",
             max_tokens=4000,
             temperature=0.7,
@@ -511,7 +511,7 @@ class TestLLMUsagePatterns:
                 ),
                 BackupModel(
                     model=LLM(
-                        model_name="gpt-3.5-turbo",
+                        model_name="gpt-4.1-nano",
                         provider="openai",
                         max_tokens=4000,
                         temperature=0.7
@@ -523,7 +523,7 @@ class TestLLMUsagePatterns:
         
         # Test the fallback ordering
         ordered_backups = primary.get_ordered_backup_models()
-        expected_models = ["claude-sonnet-3.5", "gemini-pro", "gpt-3.5-turbo"]
+        expected_models = ["claude-sonnet-3.5", "gemini-pro", "gpt-4.1-nano"]
         actual_models = [backup.model_name for backup in ordered_backups]
         
         assert actual_models == expected_models
@@ -545,7 +545,7 @@ class TestLLMUsagePatterns:
         )
         
         primary = LLM(
-            model_name="gpt-4",
+            model_name="gpt-4.1-nano",
             provider="openai",
             backup_models=[backup]
         )
@@ -553,7 +553,7 @@ class TestLLMUsagePatterns:
         # Test serialization
         json_data = primary.model_dump()
         assert isinstance(json_data, dict)
-        assert json_data["model_name"] == "gpt-4"
+        assert json_data["model_name"] == "gpt-4.1-nano"
         assert json_data["provider"] == "openai"
         assert len(json_data["backup_models"]) == 1
         

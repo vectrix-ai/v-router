@@ -255,9 +255,32 @@ class Response:
     raw_response: Any              # Original provider response
 ```
 
-## 📖 Examples
+## 📖 Documentation
 
-Explore the [`examples/`](examples/) directory for detailed usage:
+Complete documentation is available online:
+
+**📚 [Full Documentation](https://vectrix-ai.github.io/v-router/)**
+
+### Quick Links
+
+#### Getting Started
+- **[Installation](https://vectrix-ai.github.io/v-router/getting-started/installation/)** - Install v-router
+- **[Quick Start](https://vectrix-ai.github.io/v-router/getting-started/quick-start/)** - Get started in 5 minutes
+- **[Configuration](https://vectrix-ai.github.io/v-router/getting-started/configuration/)** - Set up API keys and providers
+
+#### API Reference
+- **[LLM Class](https://vectrix-ai.github.io/v-router/api/llm/)** - Complete parameter reference
+- **[Client API](https://vectrix-ai.github.io/v-router/api/client/)** - Main interface documentation
+
+#### Guides
+- **[Function Calling](https://vectrix-ai.github.io/v-router/guide/function-calling/)** - Using tools across providers
+
+#### Examples
+- **[Basic Examples](https://vectrix-ai.github.io/v-router/examples/basic/)** - Common usage patterns
+
+### Jupyter Notebooks
+
+Explore the [`examples/`](examples/) directory for interactive examples:
 
 - **[quickstart_models.ipynb](examples/quickstart_models.ipynb)**: Basic usage, fallbacks, and cross-provider switching
 - **[quickstart_tool_calling.ipynb](examples/quickstart_tool_calling.ipynb)**: Function calling across providers

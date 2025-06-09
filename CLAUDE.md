@@ -130,3 +130,4 @@ jobs:
       - run: pip install mkdocs-material 
       - run: mkdocs gh-deploy --force
 ```
+- When changing any code that affects the usage of the app, always update the documentation in @docs/ with the explanation and an example.
