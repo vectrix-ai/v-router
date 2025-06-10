@@ -2048,7 +2048,7 @@ wheels = [
 
 [[package]]
 name = "v-router"
-version = "0.0.21"
+version = "0.0.22"
 source = { editable = "." }
 dependencies = [
     { name = "anthropic", extra = ["vertex"] },
