@@ -23,7 +23,21 @@ class OpenAIProvider(BaseProvider):
         """
         super().__init__(**kwargs)
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
-        self.client = AsyncOpenAI(api_key=self.api_key)
+
+        # Create the client
+        client = AsyncOpenAI(api_key=self.api_key)
+
+        # Wrap with LangSmith if tracing is enabled
+        if os.getenv("LANGCHAIN_TRACING_V2") == "true":
+            try:
+                from langsmith.wrappers import wrap_openai
+
+                self.client = wrap_openai(client)
+            except ImportError:
+                # LangSmith not installed, use unwrapped client
+                self.client = client
+        else:
+            self.client = client
 
     async def create_message(
         self,
@@ -241,11 +255,24 @@ class AzureOpenAIProvider(BaseProvider):
                 "azure_endpoint must be provided or AZURE_OPENAI_ENDPOINT must be set"
             )
 
-        self.client = AsyncAzureOpenAI(
+        # Create the client
+        client = AsyncAzureOpenAI(
             api_key=self.api_key,
             azure_endpoint=self.azure_endpoint,
             api_version=self.api_version,
         )
+
+        # Wrap with LangSmith if tracing is enabled
+        if os.getenv("LANGCHAIN_TRACING_V2") == "true":
+            try:
+                from langsmith.wrappers import wrap_openai
+
+                self.client = wrap_openai(client)
+            except ImportError:
+                # LangSmith not installed, use unwrapped client
+                self.client = client
+        else:
+            self.client = client
 
     async def create_message(
         self,

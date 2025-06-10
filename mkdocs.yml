@@ -108,6 +108,7 @@ nav:
     - Configuration: getting-started/configuration.md
   - User Guide:
     - Function Calling: guide/function-calling.md
+    - LangSmith Tracing: guide/langsmith-tracing.md
   - API Reference:
     - Client: api/client.md
     - LLM Configuration: api/llm.md

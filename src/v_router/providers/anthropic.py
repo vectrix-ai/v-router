@@ -22,7 +22,21 @@ class AnthropicProvider(BaseProvider):
         """
         super().__init__(**kwargs)
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
-        self.client = AsyncAnthropic(api_key=self.api_key)
+
+        # Create the client
+        client = AsyncAnthropic(api_key=self.api_key)
+
+        # Wrap with LangSmith if tracing is enabled
+        if os.getenv("LANGCHAIN_TRACING_V2") == "true":
+            try:
+                from langsmith.wrappers import wrap_anthropic
+
+                self.client = wrap_anthropic(client)
+            except ImportError:
+                # LangSmith not installed, use unwrapped client
+                self.client = client
+        else:
+            self.client = client
 
     async def create_message(
         self,
@@ -246,9 +260,20 @@ class AnthropicVertexProvider(BaseProvider):
                 "project_id must be provided or GCP_PROJECT_ID must be set"
             )
 
-        self.client = AsyncAnthropicVertex(
-            project_id=self.project_id, region=self.region
-        )
+        # Create the client
+        client = AsyncAnthropicVertex(project_id=self.project_id, region=self.region)
+
+        # Wrap with LangSmith if tracing is enabled
+        if os.getenv("LANGCHAIN_TRACING_V2") == "true":
+            try:
+                from langsmith.wrappers import wrap_anthropic
+
+                self.client = wrap_anthropic(client)
+            except ImportError:
+                # LangSmith not installed, use unwrapped client
+                self.client = client
+        else:
+            self.client = client
 
     async def create_message(
         self,
