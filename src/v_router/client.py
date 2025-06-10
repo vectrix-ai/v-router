@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from v_router.classes.llm import LLM
 from v_router.providers.base import Message, Response
@@ -17,7 +17,7 @@ class Messages:
         """
         self.router = router
 
-    async def create(self, messages: List[Dict[str, str]], **kwargs) -> Response:
+    async def create(self, messages: List[Dict[str, Any]], **kwargs) -> Response:
         """Create a message with automatic fallback handling.
 
         Args:
@@ -89,7 +89,7 @@ class Client:
         self.messages = Messages(self.router)
 
     async def create_message(
-        self, messages: List[Dict[str, str]], **kwargs
+        self, messages: List[Dict[str, Any]], **kwargs
     ) -> Response:
         """Create a message (alternative to client.messages.create).
 

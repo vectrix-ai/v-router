@@ -57,10 +57,10 @@ class LLM(BaseModel):
         description="List of backup models with priorities. Models will be tried in order of priority (lowest number first).",
     )
     try_other_providers: bool = Field(
-        False,
+        default=False,
         description="Try other providers for this model as backup (if available). Only the exact same model will be used for this.",
     )
-    tools: Optional[Tools] = Field(
+    tools: Optional[Union[Tools, List[ToolCall]]] = Field(
         None,
         description="Tools/functions that can be called by the model. Can be a Tools object or a list of ToolCall objects.",
     )
@@ -82,20 +82,24 @@ class LLM(BaseModel):
         """Validate and normalize tools parameter."""
         if v is None:
             return None
-        
+
         # If it's already a Tools object, return as-is
         if isinstance(v, Tools):
             return v
-        
+
         # If it's a list of ToolCall objects, wrap in Tools
         if isinstance(v, list):
             # Validate that all items are ToolCall instances
             for item in v:
                 if not isinstance(item, ToolCall):
-                    raise ValueError(f"All items in tools list must be ToolCall instances, got {type(item)}")
+                    raise ValueError(
+                        f"All items in tools list must be ToolCall instances, got {type(item)}"
+                    )
             return Tools(tools=v)
-        
-        raise ValueError(f"tools must be either a Tools object or a list of ToolCall objects, got {type(v)}")
+
+        raise ValueError(
+            f"tools must be either a Tools object or a list of ToolCall objects, got {type(v)}"
+        )
 
     @field_validator("backup_models")
     @classmethod
