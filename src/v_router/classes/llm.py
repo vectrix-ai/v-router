@@ -45,11 +45,11 @@ class LLM(BaseModel):
         description="Provider of the LLM service. Can be 'openai', 'anthropic', 'azure', 'google', or 'vertexai'.",
     )
     max_tokens: Optional[int] = Field(
-        None,
+        default=None,
         description="Maximum number of tokens to generate in the response. If not specified, defaults to model's maximum.",
     )
     temperature: Optional[float] = Field(
-        0,
+        default=0,
         description="Sampling temperature for the model. Higher values (up to 1.0) make output more random, lower values make it more deterministic.",
     )
     backup_models: List[BackupModel] = Field(
@@ -61,11 +61,11 @@ class LLM(BaseModel):
         description="Try other providers for this model as backup (if available). Only the exact same model will be used for this.",
     )
     tools: Optional[Union[Tools, List[ToolCall]]] = Field(
-        None,
+        default=None,
         description="Tools/functions that can be called by the model. Can be a Tools object or a list of ToolCall objects.",
     )
     tool_choice: Optional[Union[str, Dict[str, Any]]] = Field(
-        None,
+        default=None,
         description=(
             "Controls how the model uses tools. Can be:\n"
             "- None or 'auto': Model decides whether to use tools (default)\n"
