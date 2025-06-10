@@ -3,11 +3,14 @@ import os
 from typing import Any, List, Optional
 
 from openai import AsyncAzureOpenAI, AsyncOpenAI
+from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
 from v_router.classes.message import Message
 from v_router.classes.response import Content, Response, ToolUse, Usage
 from v_router.classes.tools import Tools
 from v_router.providers.base import BaseProvider
+
+OpenAIInstrumentor().instrument()
 
 
 class OpenAIProvider(BaseProvider):

@@ -13,11 +13,19 @@ dependencies = [
     "google-cloud-aiplatform>=1.94.0",
     "google-genai>=1.16.1",
     "openai>=1.82.0",
+    "opentelemetry-instrumentation-anthropic>=0.40.9",
+    "opentelemetry-instrumentation-google-genai>=0.2b0",
+    "opentelemetry-instrumentation-openai>=0.40.9",
     "pyyaml>=6.0.2",
 ]
 
 [project.scripts]
 v-router = "v_router:main"
+
+[project.optional-dependencies]
+langfuse = [
+    "langfuse>=3.0.0",
+]
 
 [build-system]
 requires = ["hatchling"]

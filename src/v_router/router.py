@@ -1,7 +1,9 @@
+import os
 from pathlib import Path
 from typing import Dict, List, Type
 
 import yaml
+from langfuse import get_client
 
 from v_router.classes.llm import LLM
 from v_router.logger import setup_logger
@@ -9,6 +11,8 @@ from v_router.providers.anthropic import AnthropicProvider, AnthropicVertexProvi
 from v_router.providers.base import BaseProvider, Message, Response
 from v_router.providers.google import GoogleProvider, GoogleVertexProvider
 from v_router.providers.openai import AzureOpenAIProvider, OpenAIProvider
+
+langfuse = get_client() if os.getenv("LANGFUSE_HOST") else None
 
 logger = setup_logger(__name__)
 
@@ -156,10 +160,19 @@ class Router:
 
         # Try primary model first
         try:
-            logger.info(
-                f"Trying primary model: {self.primary_config.model_name} on {self.primary_config.provider}"
-            )
-            return await self._try_provider(self.primary_config, messages, **kwargs)
+            if langfuse:
+                with langfuse.start_as_current_span(name="primary model"):
+                    logger.info(
+                        f"Trying primary model: {self.primary_config.model_name} on {self.primary_config.provider}"
+                    )
+                    return await self._try_provider(
+                        self.primary_config, messages, **kwargs
+                    )
+            else:
+                logger.info(
+                    f"Trying primary model: {self.primary_config.model_name} on {self.primary_config.provider}"
+                )
+                return await self._try_provider(self.primary_config, messages, **kwargs)
         except Exception as e:
             logger.warning(f"Primary model failed: {str(e)}")
             errors.append(f"Primary ({self.primary_config.provider}): {str(e)}")
@@ -167,26 +180,59 @@ class Router:
         # Try backup models in priority order
         for backup_model in self.primary_config.get_ordered_backup_models():
             try:
-                logger.info(
-                    f"Trying backup model: {backup_model.model_name} on {backup_model.provider}"
-                )
-                # If backup model doesn't have tools but primary does, inherit them
-                if backup_model.tools is None and self.primary_config.tools is not None:
-                    backup_model_with_tools = backup_model.model_copy()
-                    backup_model_with_tools.tools = self.primary_config.tools
-                    # Also inherit tool_choice if backup doesn't have it
-                    if (
-                        backup_model.tool_choice is None
-                        and self.primary_config.tool_choice is not None
-                    ):
-                        backup_model_with_tools.tool_choice = (
-                            self.primary_config.tool_choice
+                if langfuse:
+                    with langfuse.start_as_current_span(name="backup model"):
+                        logger.info(
+                            f"Trying backup model: {backup_model.model_name} on {backup_model.provider}"
                         )
-                    return await self._try_provider(
-                        backup_model_with_tools, messages, **kwargs
-                    )
+                        # If backup model doesn't have tools but primary does, inherit them
+                        if (
+                            backup_model.tools is None
+                            and self.primary_config.tools is not None
+                        ):
+                            backup_model_with_tools = backup_model.model_copy()
+                            backup_model_with_tools.tools = self.primary_config.tools
+                            # Also inherit tool_choice if backup doesn't have it
+                            if (
+                                backup_model.tool_choice is None
+                                and self.primary_config.tool_choice is not None
+                            ):
+                                backup_model_with_tools.tool_choice = (
+                                    self.primary_config.tool_choice
+                                )
+                            return await self._try_provider(
+                                backup_model_with_tools, messages, **kwargs
+                            )
+                        else:
+                            return await self._try_provider(
+                                backup_model, messages, **kwargs
+                            )
                 else:
-                    return await self._try_provider(backup_model, messages, **kwargs)
+                    logger.info(
+                        f"Trying backup model: {backup_model.model_name} on {backup_model.provider}"
+                    )
+                    # If backup model doesn't have tools but primary does, inherit them
+                    if (
+                        backup_model.tools is None
+                        and self.primary_config.tools is not None
+                    ):
+                        backup_model_with_tools = backup_model.model_copy()
+                        backup_model_with_tools.tools = self.primary_config.tools
+                        # Also inherit tool_choice if backup doesn't have it
+                        if (
+                            backup_model.tool_choice is None
+                            and self.primary_config.tool_choice is not None
+                        ):
+                            backup_model_with_tools.tool_choice = (
+                                self.primary_config.tool_choice
+                            )
+                        return await self._try_provider(
+                            backup_model_with_tools, messages, **kwargs
+                        )
+                    else:
+                        return await self._try_provider(
+                            backup_model, messages, **kwargs
+                        )
             except Exception as e:
                 logger.warning(f"Backup model failed: {str(e)}")
                 errors.append(f"Backup ({backup_model.provider}): {str(e)}")

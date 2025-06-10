@@ -301,6 +301,51 @@ async def monitored_request():
     return response
 ```
 
+### LangFuse Tracing
+
+v-router includes built-in support for [LangFuse](https://langfuse.com/) tracing to monitor and debug your LLM requests:
+
+```python
+import os
+from v_router import Client, LLM
+
+# Enable LangFuse tracing by setting environment variables
+os.environ["LANGFUSE_HOST"] = "https://cloud.langfuse.com"
+os.environ["LANGFUSE_PUBLIC_KEY"] = "pk-lf-..."
+os.environ["LANGFUSE_SECRET_KEY"] = "sk-lf-..."
+
+async def traced_request():
+    # LangFuse tracing is automatically enabled when LANGFUSE_HOST is set
+    client = Client(
+        LLM(
+            model_name="claude-sonnet-4",
+            provider="anthropic",
+            backup_models=[
+                BackupModel(
+                    model=LLM(model_name="gpt-4o", provider="openai"),
+                    priority=1
+                )
+            ]
+        )
+    )
+    
+    # This request will be automatically traced in LangFuse
+    # You'll see the routing tree showing primary/backup model usage
+    response = await client.messages.create(
+        messages=[{"role": "user", "content": "Hello!"}]
+    )
+    
+    return response
+```
+
+**Benefits of LangFuse tracing:**
+- **Request Routing Visibility**: See which models (primary/backup) were used
+- **Hierarchical Traces**: Clear tree structure showing the complete request flow
+- **Usage Analytics**: Token counts, costs, and latency across providers
+- **Error Tracking**: Detailed failure reasons when fallbacks occur
+
+If `LANGFUSE_HOST` is not set, tracing is automatically disabled with no performance impact.
+
 ## Related Documentation
 
 - [LLM Configuration](llm.md): Configure models and providers

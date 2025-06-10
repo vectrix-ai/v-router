@@ -1,5 +1,7 @@
 from typing import Any, Dict, List
 
+from langfuse import observe
+
 from v_router.classes.llm import LLM
 from v_router.providers.base import Message, Response
 from v_router.router import Router
@@ -17,6 +19,7 @@ class Messages:
         """
         self.router = router
 
+    @observe(name="v-router-call", as_type="generation")
     async def create(self, messages: List[Dict[str, Any]], **kwargs) -> Response:
         """Create a message with automatic fallback handling.
 

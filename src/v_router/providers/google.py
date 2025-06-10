@@ -3,11 +3,14 @@ import os
 from typing import Any, List, Optional
 
 from google import genai
+from langfuse import get_client
 
 from v_router.classes.message import Message
 from v_router.classes.response import Content, Response, ToolUse, Usage
 from v_router.classes.tools import Tools
 from v_router.providers.base import BaseProvider
+
+langfuse = get_client() if os.getenv("LANGFUSE_HOST") else None
 
 
 class GoogleProvider(BaseProvider):
@@ -72,66 +75,148 @@ class GoogleProvider(BaseProvider):
         # Make the API call (Google SDK is sync, so we'll run in executor)
         import asyncio
 
-        response = await asyncio.get_event_loop().run_in_executor(
-            None, lambda: self.client.models.generate_content(**params)
-        )
+        if langfuse:
+            with langfuse.start_as_current_generation(
+                name="GoogleGenerativeAI",
+                model=model,
+                input=messages,
+                model_parameters={
+                    "max_tokens": max_tokens,
+                    "temperature": temperature,
+                    "tools": tools.to_dict() if tools else None,
+                    "tool_choice": tool_choice,
+                },
+            ) as generation:
+                response = await asyncio.get_event_loop().run_in_executor(
+                    None, lambda: self.client.models.generate_content(**params)
+                )
 
-        # Extract content from response
-        content_list = []
-        tool_use_list = []
+                # Extract content from response
+                content_list = []
+                tool_use_list = []
 
-        if response.candidates and response.candidates[0].content.parts:
-            parts = response.candidates[0].content.parts
+                if response.candidates and response.candidates[0].content.parts:
+                    parts = response.candidates[0].content.parts
 
-            for part in parts:
-                if hasattr(part, "text") and part.text:
-                    # Text content
-                    content_list.append(
-                        Content(type="text", role="assistant", text=part.text)
-                    )
-                elif hasattr(part, "function_call") and part.function_call:
-                    # Function call
-                    tool_use_list.append(
-                        ToolUse(
-                            id=f"google_{part.function_call.name}_{id(part)}",  # Google doesn't provide IDs
-                            name=part.function_call.name,
-                            arguments=dict(part.function_call.args),
+                    for part in parts:
+                        if hasattr(part, "text") and part.text:
+                            # Text content
+                            content_list.append(
+                                Content(type="text", role="assistant", text=part.text)
+                            )
+                        elif hasattr(part, "function_call") and part.function_call:
+                            # Function call
+                            tool_use_list.append(
+                                ToolUse(
+                                    id=f"google_{part.function_call.name}_{id(part)}",  # Google doesn't provide IDs
+                                    name=part.function_call.name,
+                                    arguments=dict(part.function_call.args),
+                                )
+                            )
+
+                # Build usage object
+                usage = Usage(
+                    input_tokens=response.usage_metadata.prompt_token_count
+                    if hasattr(response, "usage_metadata")
+                    else None,
+                    output_tokens=response.usage_metadata.candidates_token_count
+                    if hasattr(response, "usage_metadata")
+                    else None,
+                )
+
+                # Safely get raw response
+                try:
+                    if hasattr(response, "model_dump"):
+                        raw_response = response.model_dump()
+                        if not isinstance(raw_response, dict):
+                            raw_response = {}
+                    elif hasattr(response, "dict"):
+                        raw_response = response.dict()
+                        if not isinstance(raw_response, dict):
+                            raw_response = {}
+                    else:
+                        raw_response = {}
+                except Exception:
+                    raw_response = {}
+
+                generation.update(
+                    output=content_list,
+                    usage_details={
+                        "input_tokens": usage.input_tokens,
+                        "output_tokens": usage.output_tokens,
+                        "total_tokens": response.usage_metadata.total_token_count,
+                    },
+                )
+
+                return Response(
+                    content=content_list,
+                    tool_use=tool_use_list,
+                    model=model,
+                    provider=self.name,
+                    usage=usage,
+                    raw_response=raw_response,
+                )
+        else:
+            response = await asyncio.get_event_loop().run_in_executor(
+                None, lambda: self.client.models.generate_content(**params)
+            )
+
+            # Extract content from response
+            content_list = []
+            tool_use_list = []
+
+            if response.candidates and response.candidates[0].content.parts:
+                parts = response.candidates[0].content.parts
+
+                for part in parts:
+                    if hasattr(part, "text") and part.text:
+                        # Text content
+                        content_list.append(
+                            Content(type="text", role="assistant", text=part.text)
                         )
-                    )
+                    elif hasattr(part, "function_call") and part.function_call:
+                        # Function call
+                        tool_use_list.append(
+                            ToolUse(
+                                id=f"google_{part.function_call.name}_{id(part)}",  # Google doesn't provide IDs
+                                name=part.function_call.name,
+                                arguments=dict(part.function_call.args),
+                            )
+                        )
 
-        # Build usage object
-        usage = Usage(
-            input_tokens=response.usage_metadata.prompt_token_count
-            if hasattr(response, "usage_metadata")
-            else None,
-            output_tokens=response.usage_metadata.candidates_token_count
-            if hasattr(response, "usage_metadata")
-            else None,
-        )
+            # Build usage object
+            usage = Usage(
+                input_tokens=response.usage_metadata.prompt_token_count
+                if hasattr(response, "usage_metadata")
+                else None,
+                output_tokens=response.usage_metadata.candidates_token_count
+                if hasattr(response, "usage_metadata")
+                else None,
+            )
 
-        # Safely get raw response
-        try:
-            if hasattr(response, "model_dump"):
-                raw_response = response.model_dump()
-                if not isinstance(raw_response, dict):
+            # Safely get raw response
+            try:
+                if hasattr(response, "model_dump"):
+                    raw_response = response.model_dump()
+                    if not isinstance(raw_response, dict):
+                        raw_response = {}
+                elif hasattr(response, "dict"):
+                    raw_response = response.dict()
+                    if not isinstance(raw_response, dict):
+                        raw_response = {}
+                else:
                     raw_response = {}
-            elif hasattr(response, "dict"):
-                raw_response = response.dict()
-                if not isinstance(raw_response, dict):
-                    raw_response = {}
-            else:
+            except Exception:
                 raw_response = {}
-        except Exception:
-            raw_response = {}
 
-        return Response(
-            content=content_list,
-            tool_use=tool_use_list,
-            model=model,
-            provider=self.name,
-            usage=usage,
-            raw_response=raw_response,
-        )
+            return Response(
+                content=content_list,
+                tool_use=tool_use_list,
+                model=model,
+                provider=self.name,
+                usage=usage,
+                raw_response=raw_response,
+            )
 
     def _format_messages_for_google(self, messages: List[Message]) -> List:
         """Format messages for Google API."""

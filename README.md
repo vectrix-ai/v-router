@@ -289,7 +289,48 @@ export GCP_LOCATION="us-central1"
 # Azure OpenAI
 export AZURE_OPENAI_API_KEY="your-key-here"
 export AZURE_OPENAI_ENDPOINT="your-endpoint"
+
+# LangFuse (optional - for tracing)
+export LANGFUSE_HOST="your-langfuse-host"
+export LANGFUSE_PUBLIC_KEY="your-public-key"
+export LANGFUSE_SECRET_KEY="your-secret-key"
 ```
+
+### 📊 LangFuse Tracing Support
+
+v-router includes built-in support for [LangFuse](https://langfuse.com/) tracing to help you monitor and debug your LLM requests. When enabled, you get detailed visibility into:
+
+- **🎯 Request Routing**: Track whether your primary model succeeded or fallback models were used
+- **📈 Usage Analytics**: Monitor token usage, latency, and costs across providers
+- **🔍 Detailed Traces**: See the complete request/response flow with hierarchical tree structure
+- **🚨 Error Tracking**: Identify which providers failed and why during fallback scenarios
+
+#### Tree Structure Example
+
+```
+📊 LLM Request
+├── 🔴 Primary Model (claude-sonnet-4 on anthropic) - FAILED
+│   ├── Error: Rate limit exceeded
+│   └── Duration: 150ms
+└── ✅ Backup Model (gpt-4o on openai) - SUCCESS
+    ├── Input tokens: 45
+    ├── Output tokens: 128
+    ├── Duration: 2.3s
+    └── Cost: $0.0043
+```
+
+#### Setup
+
+To enable LangFuse tracing, simply set the `LANGFUSE_HOST` environment variable. If this variable is not set, tracing will be automatically disabled with no performance impact.
+
+```bash
+# Enable LangFuse tracing
+export LANGFUSE_HOST="https://cloud.langfuse.com"  # or your self-hosted instance
+export LANGFUSE_PUBLIC_KEY="pk-lf-..."
+export LANGFUSE_SECRET_KEY="sk-lf-..."
+```
+
+No code changes required - v-router automatically detects the LangFuse configuration and begins tracing all requests.
 
 ### Model Configuration
 
