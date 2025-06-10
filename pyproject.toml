@@ -1,6 +1,6 @@
 [project]
 name = "v-router"
-version = "0.0.20"
+version = "0.0.21"
 description = "A lightweight AI model router for seamlessly switching between multiple AI providers (OpenAI, Anthropic, Google AI) with unified API interface."
 readme = "README.md"
 authors = [
