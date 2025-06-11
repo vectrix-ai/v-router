@@ -2,8 +2,12 @@ import os
 from typing import Any, List, Optional
 
 from anthropic import AsyncAnthropic, AsyncAnthropicVertex
-from langfuse import get_client
 from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
+
+if os.getenv("LANGFUSE_HOST"):
+    from langfuse import get_client
+else:
+    get_client = None
 
 from v_router.classes.message import Message
 from v_router.classes.response import Content, Response, ToolUse, Usage
@@ -13,7 +17,7 @@ from v_router.providers.base import BaseProvider
 # This will automatically emit OTEL-spans for all Anthropic API calls
 AnthropicInstrumentor().instrument()
 
-langfuse = get_client() if os.getenv("LANGFUSE_HOST") else None
+langfuse = get_client() if get_client else None
 
 
 class AnthropicProvider(BaseProvider):

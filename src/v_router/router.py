@@ -3,7 +3,11 @@ from pathlib import Path
 from typing import Dict, List, Type
 
 import yaml
-from langfuse import get_client
+
+if os.getenv("LANGFUSE_HOST"):
+    from langfuse import get_client
+else:
+    get_client = None
 
 from v_router.classes.llm import LLM
 from v_router.logger import setup_logger
@@ -12,7 +16,7 @@ from v_router.providers.base import BaseProvider, Message, Response
 from v_router.providers.google import GoogleProvider, GoogleVertexProvider
 from v_router.providers.openai import AzureOpenAIProvider, OpenAIProvider
 
-langfuse = get_client() if os.getenv("LANGFUSE_HOST") else None
+langfuse = get_client() if get_client else None
 
 logger = setup_logger(__name__)
 

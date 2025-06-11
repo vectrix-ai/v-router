@@ -3,14 +3,18 @@ import os
 from typing import Any, List, Optional
 
 from google import genai
-from langfuse import get_client
+
+if os.getenv("LANGFUSE_HOST"):
+    from langfuse import get_client
+else:
+    get_client = None
 
 from v_router.classes.message import Message
 from v_router.classes.response import Content, Response, ToolUse, Usage
 from v_router.classes.tools import Tools
 from v_router.providers.base import BaseProvider
 
-langfuse = get_client() if os.getenv("LANGFUSE_HOST") else None
+langfuse = get_client() if get_client else None
 
 
 class GoogleProvider(BaseProvider):
@@ -83,7 +87,7 @@ class GoogleProvider(BaseProvider):
                 model_parameters={
                     "max_tokens": max_tokens,
                     "temperature": temperature,
-                    "tools": tools.to_dict() if tools else None,
+                    "tools": tools.model_dump() if tools else None,
                     "tool_choice": tool_choice,
                 },
             ) as generation:

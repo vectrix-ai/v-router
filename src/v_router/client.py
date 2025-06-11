@@ -1,6 +1,18 @@
+import os
 from typing import Any, Dict, List
 
-from langfuse import observe
+if os.getenv("LANGFUSE_HOST"):
+    from langfuse import observe
+else:
+
+    def observe(**kwargs):
+        """Mock observe function for testing."""
+
+        def decorator(func):
+            return func
+
+        return decorator
+
 
 from v_router.classes.llm import LLM
 from v_router.providers.base import Message, Response
