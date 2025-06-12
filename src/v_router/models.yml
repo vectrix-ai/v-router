@@ -67,6 +67,23 @@ models:
       vertexai: claude-opus-4@20250514
   
   # OpenAI models
+
+  gpt-4o:
+    providers:
+      - openai
+      - azure
+    mappings:
+      openai: gpt-4o
+      azure: gpt-4o
+
+  gpt-4o-mini:
+    providers:
+      - openai
+      - azure
+    mappings:
+      openai: gpt-4o-mini
+      azure: gpt-4o-mini
+  
   gpt-4.1:
     providers:
       - openai
@@ -75,26 +92,77 @@ models:
   gpt-4.1-nano:
     providers:
       - openai
+      - azure
     mappings:
       openai: gpt-4.1-nano
 
   gpt-4.1-nano-2025-04-14:
     providers:
       - openai
+      - azure 
     mappings:
       openai: gpt-4.1-nano-2025-04-14
 
   gpt-4.1-mini:
     providers:
       - openai
+      - azure
     mappings:
       openai: gpt-4.1-mini
 
   gpt-4.1-mini-2025-04-14:
     providers:
       - openai
+      - azures
     mappings:
       openai: gpt-4.1-mini-2025-04-14
+
+  o3:
+    providers:
+      - openai
+      - azure
+    mappings:
+      openai: o3
+
+  o3-2025-04-16:
+    providers:
+      - openai
+      - azure
+    mappings:
+      openai: o3-2025-04-16
+      azure: o3-2025-04-16
+
+  o3-mini:
+    providers:
+      - openai
+      - azure
+    mappings:
+      openai: o3-mini
+      azure: o3-mini
+
+  o4-mini-2025-04-16:
+    providers:
+      - openai
+      - azure
+    mappings:
+      openai: o4-mini-2025-04-16
+      azure: o4-mini-2025-04-16
+
+  o3-pro:
+    providers:
+      - openai
+      - azure
+    mappings:
+      openai: o3-pro
+      azure: o3-pro
+    
+  o3-pro-2025-06-10:
+    providers:
+      - openai
+      - azure
+    mappings:
+      openai: o3-pro-2025-06-10
+      azure: o3-pro-2025-06-10
   
   # Google models
   gemini-2.0-flash:

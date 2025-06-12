@@ -50,9 +50,9 @@ print(f"Model used: {response.model} ({response.provider})")
 | Provider | Models | Features |
 |----------|--------|----------|
 | **Anthropic** | Claude 3 (Opus, Sonnet, Haiku), Claude 4 (Opus, Sonnet) | Function calling, Images, PDFs, Word docs |
-| **OpenAI** | GPT-4, GPT-4 Turbo, GPT-4.1, GPT-3.5 | Function calling, Images, Word docs |
+| **OpenAI** | GPT-4, GPT-4 Turbo, GPT-4.1, GPT-3.5 | Function calling, Images, PDFs, Word docs |
 | **Google AI** | Gemini Pro, Gemini 1.5 (Pro, Flash), Gemini 2.0 Flash | Function calling, Images, PDFs, Word docs |
-| **Azure OpenAI** | GPT-4, GPT-4 Turbo, GPT-4.1, GPT-3.5 | Function calling, Images, Word docs |
+| **Azure OpenAI** | GPT-4, GPT-4 Turbo, GPT-4.1, GPT-3.5 | Function calling, Images, PDFs, Word docs |
 | **Vertex AI** | Claude 3/4 & Gemini models via Google Cloud | Function calling, Images, PDFs, Word docs |
 
 ## Why v-router?

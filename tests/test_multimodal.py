@@ -243,41 +243,48 @@ class TestProviderMultimodalHandling:
 
     @pytest.mark.asyncio
     async def test_openai_pdf_handling(self):
-        """Test that OpenAI handles PDFs with a placeholder message."""
+        """Test that OpenAI handles PDFs using the responses API."""
         provider = OpenAIProvider()
 
-        # Mock the response
+        # Mock the responses API response
         mock_response = Mock()
-        mock_response.choices = [
-            Mock(message=Mock(content="I understand", tool_calls=None))
+        mock_response.output = [
+            Mock(content=[Mock(text="I can see the PDF content")])
         ]
-        mock_response.usage = Mock(prompt_tokens=10, completion_tokens=5)
+        mock_response.usage = Mock(input_tokens=10, output_tokens=5)
         mock_response.model = "gpt-4o"
 
         with patch.object(
-            provider.client.chat.completions, "create", new_callable=AsyncMock
+            provider.client.responses, "create", new_callable=AsyncMock
         ) as mock_create:
             mock_create.return_value = mock_response
 
+            # Use valid base64 data
+            import base64
+            pdf_data = base64.b64encode(b"fake pdf content").decode("utf-8")
+            
             messages = [
                 Message(
                     role="user",
                     content=[
                         TextContent(text="Read this PDF"),
-                        DocumentContent(data="base64pdfdata"),
+                        DocumentContent(data=pdf_data),
                     ],
                 )
             ]
 
-            await provider.create_message(messages, "gpt-4o", max_tokens=100)
+            response = await provider.create_message(messages, "gpt-4o", max_tokens=100)
 
-            # Check that PDF was replaced with placeholder
+            # Check that responses API was used and PDF was sent via input_file
             call_args = mock_create.call_args[1]
-            assert len(call_args["messages"][0]["content"]) == 2
-            assert call_args["messages"][0]["content"][1] == {
-                "type": "text",
-                "text": "[PDF document provided - OpenAI does not support PDF viewing]",
-            }
+            assert "input" in call_args
+            assert len(call_args["input"][0]["content"]) == 2
+            assert call_args["input"][0]["content"][1]["type"] == "input_file"
+            assert call_args["input"][0]["content"][1]["filename"] == "document.pdf"
+            
+            # Check the response content
+            assert len(response.content) == 1
+            assert response.content[0].text == "I can see the PDF content"
 
     @pytest.mark.asyncio
     async def test_backward_compatibility_string_content(self):

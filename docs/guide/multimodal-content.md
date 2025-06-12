@@ -90,9 +90,9 @@ messages = [
 | Provider | Images | PDFs | Word Docs | Notes |
 |----------|--------|------|-----------|-------|
 | **Anthropic** | ✅ | ✅ | ✅ | Full native support for PDFs |
-| **OpenAI** | ✅ | ❌ | ✅ | Word docs converted to text |
+| **OpenAI** | ✅ | ✅ | ✅ | PDF support via responses API |
 | **Google AI** | ✅ | ✅ | ✅ | Full native support for PDFs |
-| **Azure OpenAI** | ✅ | ❌ | ✅ | Word docs converted to text |
+| **Azure OpenAI** | ✅ | ✅ | ✅ | PDF support via responses API |
 | **Vertex AI** | ✅ | ✅ | ✅ | Full support via Google infrastructure |
 
 !!! note "Provider-Specific Handling"
