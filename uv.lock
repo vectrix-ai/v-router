@@ -243,6 +243,15 @@ wheels = [
 ]
 
 [[package]]
+name = "cobble"
+version = "0.1.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/54/7a/a507c709be2c96e1bb6102eb7b7f4026c5e5e223ef7d745a17d239e9d844/cobble-0.1.4.tar.gz", hash = "sha256:de38be1539992c8a06e569630717c485a5f91be2192c461ea2b220607dfa78aa", size = 3805 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d5/e1/3714a2f371985215c219c2a70953d38e3eed81ef165aed061d21de0e998b/cobble-0.1.4-py3-none-any.whl", hash = "sha256:36c91b1655e599fd428e2b95fdd5f0da1ca2e9f1abb0bc871dec21a0e78a2b44", size = 3984 },
+]
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 source = { registry = "https://pypi.org/simple" }
@@ -897,6 +906,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/21/13/5faae9cc988c135a63eddc247d4cc5808b956f6cde1cd95469e7c67802bf/langfuse-3.0.0.tar.gz", hash = "sha256:c47449ae93a3007efee6b861484f529efb187ddbfb5093e0cb94b84636e0a605", size = 147241 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5d/3f/4ebe4e2977b48ba8876dc8a9deecd721655a17dde5d898df19212e9c5609/langfuse-3.0.0-py3-none-any.whl", hash = "sha256:5f493bd15760b15195cc71ec7aaa4f93008058a1f5dfe4b32f72f31cbdc6f605", size = 291814 },
+]
+
+[[package]]
+name = "mammoth"
+version = "1.9.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cobble" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/23/f8/b48bf3b9c7c47f3bc0de7630f0f180c01e92570953611089489d34542253/mammoth-1.9.1.tar.gz", hash = "sha256:7924254ab8f03efe55fadc0fd5f7828db831190eb2679d63cb4372873e71c572", size = 51056 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/be/0c/3153f159b78e368ac473a00e955d69d976e4b69740ed07c76c9f72a161b8/mammoth-1.9.1-py2.py3-none-any.whl", hash = "sha256:f0569bd640cee6c77a07e7c75c5dc10d745dc4dc95d530cfcbb0a5d9536d636c", size = 52991 },
 ]
 
 [[package]]
@@ -2048,13 +2069,14 @@ wheels = [
 
 [[package]]
 name = "v-router"
-version = "0.0.23"
+version = "0.0.24"
 source = { editable = "." }
 dependencies = [
     { name = "anthropic", extra = ["vertex"] },
     { name = "colorlog" },
     { name = "google-cloud-aiplatform" },
     { name = "google-genai" },
+    { name = "mammoth" },
     { name = "openai" },
     { name = "opentelemetry-instrumentation-anthropic" },
     { name = "opentelemetry-instrumentation-google-genai" },
@@ -2086,6 +2108,7 @@ requires-dist = [
     { name = "google-cloud-aiplatform", specifier = ">=1.94.0" },
     { name = "google-genai", specifier = ">=1.16.1" },
     { name = "langfuse", marker = "extra == 'langfuse'", specifier = ">=3.0.0" },
+    { name = "mammoth", specifier = ">=1.9.1" },
     { name = "openai", specifier = ">=1.82.0" },
     { name = "opentelemetry-instrumentation-anthropic", specifier = ">=0.40.9" },
     { name = "opentelemetry-instrumentation-google-genai", specifier = ">=0.2b0" },

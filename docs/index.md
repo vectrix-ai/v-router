@@ -12,7 +12,7 @@ A unified LLM interface that provides automatic fallback between different LLM p
 
 - **🛠️ Function Calling**: Unified tool calling interface across all providers. Use the same function definitions everywhere. Control tool usage with force, disable, or auto modes. [Function calling guide →](guide/function-calling.md)
 
-- **🖼️ Multimodal Support**: Send images and PDFs with automatic format conversion. Support for vision models across all providers. [Multimodal examples →](getting-started/quick-start.md)
+- **🖼️ Multimodal Support**: Send images, PDFs, and Word documents with automatic format conversion. Support for vision models across all providers. [Multimodal examples →](getting-started/quick-start.md)
 
 - **⚙️ Flexible Configuration**: Fine-tune parameters, backup models, and provider priorities. Extensive customization options. [Configuration guide →](getting-started/configuration.md)
 
@@ -49,11 +49,11 @@ print(f"Model used: {response.model} ({response.provider})")
 
 | Provider | Models | Features |
 |----------|--------|----------|
-| **Anthropic** | Claude 3 (Opus, Sonnet, Haiku), Claude 4 (Opus, Sonnet) | Function calling, Images, PDFs |
-| **OpenAI** | GPT-4, GPT-4 Turbo, GPT-4.1, GPT-3.5 | Function calling, Images |
-| **Google AI** | Gemini Pro, Gemini 1.5 (Pro, Flash), Gemini 2.0 Flash | Function calling, Images, PDFs |
-| **Azure OpenAI** | GPT-4, GPT-4 Turbo, GPT-4.1, GPT-3.5 | Function calling, Images |
-| **Vertex AI** | Claude 3/4 & Gemini models via Google Cloud | Function calling, Images, PDFs |
+| **Anthropic** | Claude 3 (Opus, Sonnet, Haiku), Claude 4 (Opus, Sonnet) | Function calling, Images, PDFs, Word docs |
+| **OpenAI** | GPT-4, GPT-4 Turbo, GPT-4.1, GPT-3.5 | Function calling, Images, Word docs |
+| **Google AI** | Gemini Pro, Gemini 1.5 (Pro, Flash), Gemini 2.0 Flash | Function calling, Images, PDFs, Word docs |
+| **Azure OpenAI** | GPT-4, GPT-4 Turbo, GPT-4.1, GPT-3.5 | Function calling, Images, Word docs |
+| **Vertex AI** | Claude 3/4 & Gemini models via Google Cloud | Function calling, Images, PDFs, Word docs |
 
 ## Why v-router?
 
@@ -80,7 +80,7 @@ Ready to get started? Follow our quick start guide:
 
 - [x] **Chat Completions**: Unified interface across providers 
 - [x] **Function Calling**: Tool calling support with force/disable/auto modes
-- [x] **Multimodal Support**: Images, PDFs, and document processing
+- [x] **Multimodal Support**: Images, PDFs, and Word document processing
 - [ ] **Streaming**: Real-time response streaming
 - [ ] **AWS Bedrock**: Additional provider support
 - [ ] **JSON Mode**: Structured output generation

@@ -108,6 +108,7 @@ nav:
     - Configuration: getting-started/configuration.md
   - User Guide:
     - Function Calling: guide/function-calling.md
+    - Multimodal Content: guide/multimodal-content.md
   - API Reference:
     - Client: api/client.md
     - LLM Configuration: api/llm.md

@@ -12,6 +12,7 @@ dependencies = [
     "colorlog>=6.9.0",
     "google-cloud-aiplatform>=1.94.0",
     "google-genai>=1.16.1",
+    "mammoth>=1.9.1",
     "openai>=1.82.0",
     "opentelemetry-instrumentation-anthropic>=0.40.9",
     "opentelemetry-instrumentation-google-genai>=0.2b0",

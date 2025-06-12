@@ -1,7 +1,10 @@
+import base64
+import io
 import json
 import os
 from typing import Any, List, Optional
 
+import mammoth
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
@@ -197,13 +200,38 @@ class OpenAIProvider(BaseProvider):
                             }
                         )
                     elif item.type == "document":
-                        # OpenAI doesn't natively support PDFs, so we'll add a text note
-                        openai_content.append(
-                            {
-                                "type": "text",
-                                "text": "[PDF document provided - OpenAI does not support PDF viewing]",
-                            }
-                        )
+                        if (
+                            item.media_type
+                            == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        ):
+                            # Convert Word document to HTML and send as text
+
+                            try:
+                                # Decode base64 data and convert to HTML
+                                docx_data = base64.b64decode(item.data)
+                                docx_file = io.BytesIO(docx_data)
+                                result = mammoth.convert_to_html(docx_file)
+                                html_content = result.value
+
+                                openai_content.append(
+                                    {"type": "text", "text": html_content}
+                                )
+                            except Exception:
+                                # If conversion fails, add a placeholder message
+                                openai_content.append(
+                                    {
+                                        "type": "text",
+                                        "text": "[Word document provided - conversion failed]",
+                                    }
+                                )
+                        else:
+                            # OpenAI doesn't natively support PDFs, so we'll add a text note
+                            openai_content.append(
+                                {
+                                    "type": "text",
+                                    "text": "[PDF document provided - OpenAI does not support PDF viewing]",
+                                }
+                            )
             return openai_content
 
         # Fallback to string representation
@@ -423,13 +451,38 @@ class AzureOpenAIProvider(BaseProvider):
                             }
                         )
                     elif item.type == "document":
-                        # OpenAI doesn't natively support PDFs, so we'll add a text note
-                        openai_content.append(
-                            {
-                                "type": "text",
-                                "text": "[PDF document provided - OpenAI does not support PDF viewing]",
-                            }
-                        )
+                        if (
+                            item.media_type
+                            == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        ):
+                            # Convert Word document to HTML and send as text
+
+                            try:
+                                # Decode base64 data and convert to HTML
+                                docx_data = base64.b64decode(item.data)
+                                docx_file = io.BytesIO(docx_data)
+                                result = mammoth.convert_to_html(docx_file)
+                                html_content = result.value
+
+                                openai_content.append(
+                                    {"type": "text", "text": html_content}
+                                )
+                            except Exception:
+                                # If conversion fails, add a placeholder message
+                                openai_content.append(
+                                    {
+                                        "type": "text",
+                                        "text": "[Word document provided - conversion failed]",
+                                    }
+                                )
+                        else:
+                            # OpenAI doesn't natively support PDFs, so we'll add a text note
+                            openai_content.append(
+                                {
+                                    "type": "text",
+                                    "text": "[PDF document provided - OpenAI does not support PDF viewing]",
+                                }
+                            )
             return openai_content
 
         # Fallback to string representation

@@ -237,6 +237,47 @@ if response.tool_use:
 !!! tip "Tool Choice Control"
     Use `tool_choice="calculator"` to force the calculator tool, `"any"` to require any tool, or `"none"` to disable tools entirely.
 
+## Multimodal Content Preview
+
+v-router supports images, PDFs, and Word documents across all providers with automatic format conversion:
+
+```python
+# Send an image by file path (automatic detection)
+response = await client.messages.create(
+    messages=[
+        {"role": "user", "content": "/path/to/image.jpg"},
+        {"role": "user", "content": "What do you see in this image?"}
+    ]
+)
+
+# Send a Word document (automatically converted to HTML)
+response = await client.messages.create(
+    messages=[
+        {"role": "user", "content": "/path/to/document.docx"},
+        {"role": "user", "content": "Summarize this document"}
+    ]
+)
+
+# Combine multiple content types
+from v_router.classes.message import TextContent, ImageContent, DocumentContent
+
+messages = [
+    {
+        "role": "user",
+        "content": [
+            TextContent(text="Analyze these materials:"),
+            ImageContent(data=base64_image, media_type="image/jpeg"),
+            DocumentContent(data=base64_docx, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        ]
+    }
+]
+```
+
+!!! note "Cross-Provider Support"
+    - **Images**: Supported by all providers
+    - **PDFs**: Supported by Anthropic, Google, and Vertex AI
+    - **Word Documents**: Converted to HTML and supported by all providers
+
 ## Complete Example
 
 Here's a complete example that demonstrates multiple features:
@@ -303,7 +344,7 @@ if __name__ == "__main__":
 Now that you understand the basics, explore more advanced features:
 
 - **[Function Calling](../guide/function-calling.md)**: Use tools and function calls
-- **[Multimodal Content](../guide/multimodal-content.md)**: Send images and PDFs
+- **[Multimodal Content](../guide/multimodal-content.md)**: Send images, PDFs, and Word documents
 - **[Configuration](configuration.md)**: Set up API keys and advanced options
 - **[Examples](../examples/basic.md)**: See more detailed examples
 

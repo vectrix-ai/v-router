@@ -656,6 +656,63 @@ async def best_practices_example():
 asyncio.run(best_practices_example())
 ```
 
+## Multimodal Content Example
+
+Send images and documents with automatic format conversion:
+
+```python
+import asyncio
+import base64
+from v_router import Client, LLM
+from v_router.classes.message import TextContent, ImageContent, DocumentContent
+
+async def multimodal_example():
+    client = Client(
+        LLM(model_name="claude-sonnet-4", provider="anthropic")
+    )
+    
+    # Example 1: Send image by file path (automatic detection)
+    response = await client.messages.create(
+        messages=[
+            {"role": "user", "content": "/path/to/image.jpg"},
+            {"role": "user", "content": "What do you see in this image?"}
+        ]
+    )
+    print("Image analysis:", response.content[0].text[:100] + "...")
+    
+    # Example 2: Send Word document (automatically converted to HTML)
+    response = await client.messages.create(
+        messages=[
+            {"role": "user", "content": "/path/to/document.docx"},
+            {"role": "user", "content": "Summarize this document"}
+        ]
+    )
+    print("Document summary:", response.content[0].text[:100] + "...")
+    
+    # Example 3: Complex multimodal message
+    # Note: In real usage, replace with actual base64 data
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                TextContent(text="Analyze these materials:"),
+                ImageContent(data="base64_image_data", media_type="image/jpeg"),
+                DocumentContent(
+                    data="base64_docx_data", 
+                    media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                ),
+                TextContent(text="What insights can you provide?")
+            ]
+        }
+    ]
+    
+    response = await client.messages.create(messages=messages)
+    print("Multi-content analysis:", response.content[0].text[:100] + "...")
+
+# Run the example
+asyncio.run(multimodal_example())
+```
+
 ## Next Steps
 
 These basic examples should help you get started with v-router. For more advanced use cases, check out:

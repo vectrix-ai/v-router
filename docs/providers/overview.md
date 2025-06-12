@@ -6,11 +6,11 @@ v-router supports multiple LLM providers, each with their own strengths and capa
 
 | Provider | Models | Function Calling | Multimodal | Streaming* | Cost |
 |----------|--------|------------------|------------|------------|------|
-| **[Anthropic](anthropic.md)** | Claude 3, Claude 4 | ✅ | ✅ Images, PDFs | 🚧 | $$$ |
-| **[OpenAI](openai.md)** | GPT-4, GPT-3.5 | ✅ | ✅ Images | 🚧 | $$$ |
-| **[Google AI](google.md)** | Gemini 1.5, 2.0 | ✅ | ✅ Images, PDFs | 🚧 | $$ |
-| **[Azure OpenAI](azure.md)** | GPT-4, GPT-3.5 | ✅ | ✅ Images | 🚧 | $$$ |
-| **[Vertex AI](vertex.md)** | Claude + Gemini | ✅ | ✅ Images, PDFs | 🚧 | $$ |
+| **[Anthropic](anthropic.md)** | Claude 3, Claude 4 | ✅ | ✅ Images, PDFs, Word | 🚧 | $$$ |
+| **[OpenAI](openai.md)** | GPT-4, GPT-3.5 | ✅ | ✅ Images, Word | 🚧 | $$$ |
+| **[Google AI](google.md)** | Gemini 1.5, 2.0 | ✅ | ✅ Images, PDFs, Word | 🚧 | $$ |
+| **[Azure OpenAI](azure.md)** | GPT-4, GPT-3.5 | ✅ | ✅ Images, Word | 🚧 | $$$ |
+| **[Vertex AI](vertex.md)** | Claude + Gemini | ✅ | ✅ Images, PDFs, Word | 🚧 | $$ |
 
 *Streaming support is planned for future releases
 
@@ -58,11 +58,11 @@ v-router supports multiple LLM providers, each with their own strengths and capa
 
 ### Multimodal Capabilities
 
-| Provider | Image Understanding | PDF Processing | Document Analysis |
-|----------|-------------------|----------------|-------------------|
-| Anthropic | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| OpenAI | ⭐⭐⭐⭐ | ❌ | ⭐⭐⭐ |
-| Google | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
+| Provider | Image Understanding | PDF Processing | Word Documents | Document Analysis |
+|----------|-------------------|----------------|----------------|-------------------|
+| Anthropic | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| OpenAI | ⭐⭐⭐⭐ | ❌ | ⭐⭐⭐⭐ | ⭐⭐⭐ |
+| Google | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
 
 ### Performance & Cost
 

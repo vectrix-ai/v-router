@@ -1,7 +1,9 @@
 import base64
+import io
 import os
 from typing import Any, List, Optional
 
+import mammoth
 from google import genai
 
 if os.getenv("LANGFUSE_HOST"):
@@ -331,15 +333,37 @@ class GoogleProvider(BaseProvider):
                             )
                         )
                     elif item.type == "document":
-                        # Google Gemini supports PDF files through inline_data
-                        parts.append(
-                            genai.types.Part(
-                                inline_data=genai.types.Blob(
-                                    mime_type=item.media_type,
-                                    data=base64.b64decode(item.data),
+                        if (
+                            item.media_type
+                            == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        ):
+                            # Convert Word document to HTML and send as text
+
+                            try:
+                                # Decode base64 data and convert to HTML
+                                docx_data = base64.b64decode(item.data)
+                                docx_file = io.BytesIO(docx_data)
+                                result = mammoth.convert_to_html(docx_file)
+                                html_content = result.value
+
+                                parts.append(genai.types.Part(text=html_content))
+                            except Exception:
+                                # If conversion fails, add a placeholder message
+                                parts.append(
+                                    genai.types.Part(
+                                        text="[Word document provided - conversion failed]"
+                                    )
+                                )
+                        else:
+                            # Google Gemini supports PDF files through inline_data
+                            parts.append(
+                                genai.types.Part(
+                                    inline_data=genai.types.Blob(
+                                        mime_type=item.media_type,
+                                        data=base64.b64decode(item.data),
+                                    )
                                 )
                             )
-                        )
             return parts
 
         # Fallback to text
@@ -595,15 +619,37 @@ class GoogleVertexProvider(BaseProvider):
                             )
                         )
                     elif item.type == "document":
-                        # Google Gemini supports PDF files through inline_data
-                        parts.append(
-                            genai.types.Part(
-                                inline_data=genai.types.Blob(
-                                    mime_type=item.media_type,
-                                    data=base64.b64decode(item.data),
+                        if (
+                            item.media_type
+                            == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        ):
+                            # Convert Word document to HTML and send as text
+
+                            try:
+                                # Decode base64 data and convert to HTML
+                                docx_data = base64.b64decode(item.data)
+                                docx_file = io.BytesIO(docx_data)
+                                result = mammoth.convert_to_html(docx_file)
+                                html_content = result.value
+
+                                parts.append(genai.types.Part(text=html_content))
+                            except Exception:
+                                # If conversion fails, add a placeholder message
+                                parts.append(
+                                    genai.types.Part(
+                                        text="[Word document provided - conversion failed]"
+                                    )
+                                )
+                        else:
+                            # Google Gemini supports PDF files through inline_data
+                            parts.append(
+                                genai.types.Part(
+                                    inline_data=genai.types.Blob(
+                                        mime_type=item.media_type,
+                                        data=base64.b64decode(item.data),
+                                    )
                                 )
                             )
-                        )
             return parts
 
         # Fallback to text
