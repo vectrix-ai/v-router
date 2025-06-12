@@ -1,6 +1,9 @@
+import base64
+import io
 import os
 from typing import Any, List, Optional
 
+import mammoth
 from anthropic import AsyncAnthropic, AsyncAnthropicVertex
 from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
 
@@ -213,16 +216,42 @@ class AnthropicProvider(BaseProvider):
                             }
                         )
                     elif item.type == "document":
-                        anthropic_content.append(
-                            {
-                                "type": "document",
-                                "source": {
-                                    "type": "base64",
-                                    "media_type": item.media_type,
-                                    "data": item.data,
-                                },
-                            }
-                        )
+                        if (
+                            item.media_type
+                            == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        ):
+                            # Convert Word document to HTML and send as text
+
+                            try:
+                                # Decode base64 data and convert to HTML
+                                docx_data = base64.b64decode(item.data)
+                                docx_file = io.BytesIO(docx_data)
+                                result = mammoth.convert_to_html(docx_file)
+                                html_content = result.value
+
+                                anthropic_content.append(
+                                    {"type": "text", "text": html_content}
+                                )
+                            except Exception:
+                                # If conversion fails, add a placeholder message
+                                anthropic_content.append(
+                                    {
+                                        "type": "text",
+                                        "text": "[Word document provided - conversion failed]",
+                                    }
+                                )
+                        else:
+                            # Handle PDFs and other documents normally
+                            anthropic_content.append(
+                                {
+                                    "type": "document",
+                                    "source": {
+                                        "type": "base64",
+                                        "media_type": item.media_type,
+                                        "data": item.data,
+                                    },
+                                }
+                            )
             return anthropic_content
 
         # Fallback to string representation
@@ -439,16 +468,42 @@ class AnthropicVertexProvider(BaseProvider):
                             }
                         )
                     elif item.type == "document":
-                        anthropic_content.append(
-                            {
-                                "type": "document",
-                                "source": {
-                                    "type": "base64",
-                                    "media_type": item.media_type,
-                                    "data": item.data,
-                                },
-                            }
-                        )
+                        if (
+                            item.media_type
+                            == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        ):
+                            # Convert Word document to HTML and send as text
+
+                            try:
+                                # Decode base64 data and convert to HTML
+                                docx_data = base64.b64decode(item.data)
+                                docx_file = io.BytesIO(docx_data)
+                                result = mammoth.convert_to_html(docx_file)
+                                html_content = result.value
+
+                                anthropic_content.append(
+                                    {"type": "text", "text": html_content}
+                                )
+                            except Exception:
+                                # If conversion fails, add a placeholder message
+                                anthropic_content.append(
+                                    {
+                                        "type": "text",
+                                        "text": "[Word document provided - conversion failed]",
+                                    }
+                                )
+                        else:
+                            # Handle PDFs and other documents normally
+                            anthropic_content.append(
+                                {
+                                    "type": "document",
+                                    "source": {
+                                        "type": "base64",
+                                        "media_type": item.media_type,
+                                        "data": item.data,
+                                    },
+                                }
+                            )
             return anthropic_content
 
         # Fallback to string representation

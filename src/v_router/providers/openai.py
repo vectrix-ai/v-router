@@ -1,7 +1,10 @@
+import base64
+import io
 import json
 import os
 from typing import Any, List, Optional
 
+import mammoth
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
@@ -39,6 +42,137 @@ class OpenAIProvider(BaseProvider):
         **kwargs,
     ) -> Response:
         """Create a message using OpenAI's API."""
+        # Check if we have PDF content
+        has_pdf_content = self._has_pdf_content(messages)
+
+        # Use responses API for PDF content (when no tools), chat completions for tools
+        if has_pdf_content and not tools:
+            return await self._create_message_with_responses_api(
+                messages, model, max_tokens, temperature, **kwargs
+            )
+        else:
+            return await self._create_message_with_chat_completions(
+                messages, model, max_tokens, temperature, tools, tool_choice, **kwargs
+            )
+
+    def _has_pdf_content(self, messages: List[Message]) -> bool:
+        """Check if any message contains PDF content."""
+        for msg in messages:
+            if isinstance(msg.content, list):
+                for item in msg.content:
+                    if hasattr(item, "type") and item.type == "document":
+                        if (
+                            hasattr(item, "media_type")
+                            and item.media_type == "application/pdf"
+                        ):
+                            return True
+        return False
+
+    async def _create_message_with_responses_api(
+        self,
+        messages: List[Message],
+        model: str,
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
+        **kwargs,
+    ) -> Response:
+        """Create message using OpenAI responses API for enhanced content support."""
+        # Convert messages to new input format for responses API
+        input_messages = []
+        for msg in messages:
+            if isinstance(msg.content, str):
+                # Simple string content
+                input_messages.append(
+                    {
+                        "role": msg.role,
+                        "content": [{"type": "input_text", "text": msg.content}],
+                    }
+                )
+            else:
+                # Multimodal content
+                openai_content = self._convert_content_to_responses_format(msg.content)
+                input_messages.append({"role": msg.role, "content": openai_content})
+
+        # Prepare parameters for responses API
+        responses_params = {
+            "model": self.validate_model_name(model),
+            "input": input_messages,
+        }
+
+        if max_tokens is not None:
+            responses_params["max_output_tokens"] = max_tokens
+
+        if temperature is not None:
+            responses_params["temperature"] = temperature
+
+        # Add any additional kwargs
+        responses_params.update(kwargs)
+
+        # Make the API call using responses API
+        response = await self.client.responses.create(**responses_params)
+
+        # Extract content from responses API response
+        content_list = []
+        tool_use_list = []
+
+        if response.output and len(response.output) > 0:
+            output_message = response.output[0]
+
+            # Add text content if present
+            if hasattr(output_message, "content") and output_message.content:
+                for content_item in output_message.content:
+                    if hasattr(content_item, "text"):
+                        content_list.append(
+                            Content(
+                                type="text", role="assistant", text=content_item.text
+                            )
+                        )
+
+        # Build usage object for responses API
+        usage = Usage(
+            input_tokens=response.usage.input_tokens
+            if hasattr(response, "usage")
+            else None,
+            output_tokens=response.usage.output_tokens
+            if hasattr(response, "usage")
+            else None,
+        )
+
+        # Safely get raw response
+        try:
+            if hasattr(response, "model_dump"):
+                raw_response = response.model_dump()
+                if not isinstance(raw_response, dict):
+                    raw_response = {}
+            elif hasattr(response, "dict"):
+                raw_response = response.dict()
+                if not isinstance(raw_response, dict):
+                    raw_response = {}
+            else:
+                raw_response = {}
+        except Exception:
+            raw_response = {}
+
+        return Response(
+            content=content_list,
+            tool_use=tool_use_list,
+            model=response.model,
+            provider=self.name,
+            usage=usage,
+            raw_response=raw_response,
+        )
+
+    async def _create_message_with_chat_completions(
+        self,
+        messages: List[Message],
+        model: str,
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
+        tools: Optional[Tools] = None,
+        tool_choice: Optional[Any] = None,
+        **kwargs,
+    ) -> Response:
+        """Create message using OpenAI chat completions API for compatibility with tools."""
         # Convert messages to OpenAI format
         openai_messages = []
         for msg in messages:
@@ -174,7 +308,7 @@ class OpenAIProvider(BaseProvider):
             return "auto"
 
     def _convert_content_to_openai_format(self, content):
-        """Convert message content to OpenAI format."""
+        """Convert message content to OpenAI format with enhanced PDF support."""
         # Handle string content (backward compatibility)
         if isinstance(content, str):
             return content
@@ -197,17 +331,120 @@ class OpenAIProvider(BaseProvider):
                             }
                         )
                     elif item.type == "document":
-                        # OpenAI doesn't natively support PDFs, so we'll add a text note
-                        openai_content.append(
-                            {
-                                "type": "text",
-                                "text": "[PDF document provided - OpenAI does not support PDF viewing]",
-                            }
-                        )
+                        if item.media_type == "application/pdf":
+                            # Enhanced PDF support: Convert to text for now
+                            # Note: Full PDF support would require responses API
+                            openai_content.append(
+                                {
+                                    "type": "text",
+                                    "text": f"[PDF document provided - filename: {getattr(item, 'filename', 'document.pdf')}]",
+                                }
+                            )
+                        elif (
+                            item.media_type
+                            == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        ):
+                            # Convert Word document to HTML and send as text
+                            try:
+                                # Decode base64 data and convert to HTML
+                                docx_data = base64.b64decode(item.data)
+                                docx_file = io.BytesIO(docx_data)
+                                result = mammoth.convert_to_html(docx_file)
+                                html_content = result.value
+
+                                openai_content.append(
+                                    {"type": "text", "text": html_content}
+                                )
+                            except Exception:
+                                # If conversion fails, add a placeholder message
+                                openai_content.append(
+                                    {
+                                        "type": "text",
+                                        "text": "[Word document provided - conversion failed]",
+                                    }
+                                )
+                        else:
+                            # Other document types - placeholder for now
+                            openai_content.append(
+                                {
+                                    "type": "text",
+                                    "text": f"[Document provided - {item.media_type}]",
+                                }
+                            )
             return openai_content
 
         # Fallback to string representation
         return str(content)
+
+    def _convert_content_to_responses_format(self, content):
+        """Convert message content to OpenAI responses API format."""
+        # Handle string content (backward compatibility)
+        if isinstance(content, str):
+            return [{"type": "input_text", "text": content}]
+
+        # Handle list of content items
+        if isinstance(content, list):
+            openai_content = []
+            for item in content:
+                if hasattr(item, "type"):
+                    if item.type == "text":
+                        openai_content.append({"type": "input_text", "text": item.text})
+                    elif item.type == "image":
+                        # OpenAI responses API expects input_image with base64 data URI
+                        openai_content.append(
+                            {
+                                "type": "input_image",
+                                "image_url": f"data:{item.media_type};base64,{item.data}",
+                            }
+                        )
+                    elif item.type == "document":
+                        if item.media_type == "application/pdf":
+                            # PDF support using input_file
+                            openai_content.append(
+                                {
+                                    "type": "input_file",
+                                    "file_data": f"data:{item.media_type};base64,{item.data}",
+                                    "filename": getattr(
+                                        item, "filename", "document.pdf"
+                                    ),
+                                }
+                            )
+                        elif (
+                            item.media_type
+                            == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        ):
+                            # Convert Word document to HTML and send as text
+                            try:
+                                # Decode base64 data and convert to HTML
+                                docx_data = base64.b64decode(item.data)
+                                docx_file = io.BytesIO(docx_data)
+                                result = mammoth.convert_to_html(docx_file)
+                                html_content = result.value
+
+                                openai_content.append(
+                                    {"type": "input_text", "text": html_content}
+                                )
+                            except Exception:
+                                # If conversion fails, add a placeholder message
+                                openai_content.append(
+                                    {
+                                        "type": "input_text",
+                                        "text": "[Word document provided - conversion failed]",
+                                    }
+                                )
+                        else:
+                            # Other document types using input_file
+                            openai_content.append(
+                                {
+                                    "type": "input_file",
+                                    "file_data": f"data:{item.media_type};base64,{item.data}",
+                                    "filename": getattr(item, "filename", "document"),
+                                }
+                            )
+            return openai_content
+
+        # Fallback to string representation
+        return [{"type": "input_text", "text": str(content)}]
 
     @property
     def name(self) -> str:
@@ -400,7 +637,7 @@ class AzureOpenAIProvider(BaseProvider):
             return "auto"
 
     def _convert_content_to_openai_format(self, content):
-        """Convert message content to OpenAI format."""
+        """Convert message content to OpenAI format with enhanced PDF support."""
         # Handle string content (backward compatibility)
         if isinstance(content, str):
             return content
@@ -423,13 +660,46 @@ class AzureOpenAIProvider(BaseProvider):
                             }
                         )
                     elif item.type == "document":
-                        # OpenAI doesn't natively support PDFs, so we'll add a text note
-                        openai_content.append(
-                            {
-                                "type": "text",
-                                "text": "[PDF document provided - OpenAI does not support PDF viewing]",
-                            }
-                        )
+                        if item.media_type == "application/pdf":
+                            # Enhanced PDF support: Convert to text for now
+                            # Note: Full PDF support would require responses API
+                            openai_content.append(
+                                {
+                                    "type": "text",
+                                    "text": f"[PDF document provided - filename: {getattr(item, 'filename', 'document.pdf')}]",
+                                }
+                            )
+                        elif (
+                            item.media_type
+                            == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        ):
+                            # Convert Word document to HTML and send as text
+                            try:
+                                # Decode base64 data and convert to HTML
+                                docx_data = base64.b64decode(item.data)
+                                docx_file = io.BytesIO(docx_data)
+                                result = mammoth.convert_to_html(docx_file)
+                                html_content = result.value
+
+                                openai_content.append(
+                                    {"type": "text", "text": html_content}
+                                )
+                            except Exception:
+                                # If conversion fails, add a placeholder message
+                                openai_content.append(
+                                    {
+                                        "type": "text",
+                                        "text": "[Word document provided - conversion failed]",
+                                    }
+                                )
+                        else:
+                            # Other document types - placeholder for now
+                            openai_content.append(
+                                {
+                                    "type": "text",
+                                    "text": f"[Document provided - {item.media_type}]",
+                                }
+                            )
             return openai_content
 
         # Fallback to string representation

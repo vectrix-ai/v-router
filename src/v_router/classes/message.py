@@ -3,6 +3,7 @@ import mimetypes
 from pathlib import Path
 from typing import List, Literal, Union
 
+import mammoth
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 
@@ -23,11 +24,25 @@ class ImageContent(BaseModel):
 
 
 class DocumentContent(BaseModel):
-    """Document content in a message (PDF)."""
+    """Document content in a message (PDF or Word)."""
 
     type: Literal["document"] = "document"
     data: str  # Base64 encoded document data
     media_type: str = "application/pdf"
+
+    @field_validator("media_type")
+    @classmethod
+    def validate_media_type(cls, v: str) -> str:
+        """Validate that the media type is supported."""
+        allowed_types = [
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ]
+        if v not in allowed_types:
+            raise ValueError(
+                f"Unsupported media type: {v}. Allowed types: {allowed_types}"
+            )
+        return v
 
 
 ContentType = Union[TextContent, ImageContent, DocumentContent]
@@ -80,6 +95,7 @@ class Message(BaseModel):
                         ".gif",
                         ".webp",
                         ".pdf",
+                        ".docx",
                         ".tiff",
                         ".tif",
                         ".bmp",
@@ -116,6 +132,25 @@ class Message(BaseModel):
                                 ]
                             elif mime_type == "application/pdf":
                                 values["content"] = [DocumentContent(data=file_data)]
+                            elif (
+                                mime_type
+                                == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                            ):
+                                # Convert Word document to HTML using mammoth
+                                try:
+                                    with open(path, "rb") as docx_file:
+                                        result = mammoth.convert_to_html(docx_file)
+                                        html_content = result.value
+                                    # Return as text content since Word docs are converted to HTML
+                                    values["content"] = [TextContent(text=html_content)]
+                                except Exception:
+                                    # If conversion fails, store as document for manual handling
+                                    values["content"] = [
+                                        DocumentContent(
+                                            data=file_data,
+                                            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                        )
+                                    ]
                             else:
                                 # Not an image or PDF, treat as text
                                 values["content"] = content

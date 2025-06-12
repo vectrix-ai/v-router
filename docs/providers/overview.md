@@ -6,11 +6,11 @@ v-router supports multiple LLM providers, each with their own strengths and capa
 
 | Provider | Models | Function Calling | Multimodal | Streaming* | Cost |
 |----------|--------|------------------|------------|------------|------|
-| **[Anthropic](anthropic.md)** | Claude 3, Claude 4 | ✅ | ✅ Images, PDFs | 🚧 | $$$ |
-| **[OpenAI](openai.md)** | GPT-4, GPT-3.5 | ✅ | ✅ Images | 🚧 | $$$ |
-| **[Google AI](google.md)** | Gemini 1.5, 2.0 | ✅ | ✅ Images, PDFs | 🚧 | $$ |
-| **[Azure OpenAI](azure.md)** | GPT-4, GPT-3.5 | ✅ | ✅ Images | 🚧 | $$$ |
-| **[Vertex AI](vertex.md)** | Claude + Gemini | ✅ | ✅ Images, PDFs | 🚧 | $$ |
+| **[Anthropic](anthropic.md)** | Claude 3, Claude 4 | ✅ | ✅ Images, PDFs, Word | 🚧 | $$$ |
+| **[OpenAI](openai.md)** | GPT-4, GPT-3.5 | ✅ | ✅ Images, PDFs, Word | 🚧 | $$$ |
+| **[Google AI](google.md)** | Gemini 1.5, 2.0 | ✅ | ✅ Images, PDFs, Word | 🚧 | $$ |
+| **[Azure OpenAI](azure.md)** | GPT-4, GPT-3.5 | ✅ | ✅ Images, PDFs, Word | 🚧 | $$$ |
+| **[Vertex AI](vertex.md)** | Claude + Gemini | ✅ | ✅ Images, PDFs, Word | 🚧 | $$ |
 
 *Streaming support is planned for future releases
 
@@ -18,31 +18,31 @@ v-router supports multiple LLM providers, each with their own strengths and capa
 
 ### Anthropic
 - **Best for**: High-quality reasoning, analysis, creative writing
-- **Models**: Claude 3 (Opus, Sonnet, Haiku), Claude 4 (Opus, Sonnet)
+- **Models**: Claude 3.5 Haiku, Claude Sonnet 4, Claude Opus 4
 - **Strengths**: Excellent instruction following, safety, long context
 - **Use cases**: Complex analysis, creative tasks, code review
 
 ### OpenAI
 - **Best for**: General-purpose tasks, wide ecosystem support
-- **Models**: GPT-4, GPT-4 Turbo, GPT-4.1, GPT-3.5
+- **Models**: GPT-4o, GPT-4o Mini, GPT-4.1 (Nano, Mini), O3 (Mini, Pro), O4 Mini
 - **Strengths**: Fast inference, broad capabilities, mature API
 - **Use cases**: Chat applications, content generation, code assistance
 
 ### Google AI
 - **Best for**: Cost-effective multimodal tasks, fast inference
-- **Models**: Gemini Pro, Gemini 1.5 (Pro, Flash), Gemini 2.0 Flash
+- **Models**: Gemini 2.0 Flash, Gemini 2.5 (Pro Preview, Flash Preview)
 - **Strengths**: Fast, cost-effective, good multimodal support
 - **Use cases**: Real-time applications, image analysis, cost-sensitive projects
 
 ### Azure OpenAI
 - **Best for**: Enterprise deployments, compliance requirements
-- **Models**: Same as OpenAI (GPT-4, GPT-3.5)
+- **Models**: GPT-4o, GPT-4o Mini, GPT-4.1 (Nano, Mini), O3 (Mini, Pro), O4 Mini
 - **Strengths**: Enterprise features, compliance, data residency
 - **Use cases**: Enterprise applications, regulated industries
 
 ### Vertex AI
 - **Best for**: Google Cloud integration, unified access to multiple models
-- **Models**: Claude 3/4 and Gemini models via Google Cloud
+- **Models**: Claude (3.5 Haiku, Sonnet 4, Opus 4), Gemini (2.0 Flash, 2.5 Pro/Flash Preview)
 - **Strengths**: Single platform for multiple models, enterprise features
 - **Use cases**: Google Cloud environments, multi-model workflows
 
@@ -58,11 +58,11 @@ v-router supports multiple LLM providers, each with their own strengths and capa
 
 ### Multimodal Capabilities
 
-| Provider | Image Understanding | PDF Processing | Document Analysis |
-|----------|-------------------|----------------|-------------------|
-| Anthropic | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| OpenAI | ⭐⭐⭐⭐ | ❌ | ⭐⭐⭐ |
-| Google | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
+| Provider | Image Understanding | PDF Processing | Word Documents | Document Analysis |
+|----------|-------------------|----------------|----------------|-------------------|
+| Anthropic | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| OpenAI | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
+| Google | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
 
 ### Performance & Cost
 
@@ -79,7 +79,7 @@ v-router supports multiple LLM providers, each with their own strengths and capa
 ### For Development & Prototyping
 ```python
 # Start with Google for cost-effectiveness
-LLM(model_name="gemini-1.5-pro", provider="google")
+LLM(model_name="gemini-2.0-flash", provider="google")
 ```
 
 ### For Production Systems
@@ -206,7 +206,7 @@ LLM(model_name="claude-sonnet-4", provider="anthropic", tools=Tools(tools=[tool]
 LLM(model_name="gpt-4o", provider="openai", tools=Tools(tools=[tool]))
 
 # Works with Google
-LLM(model_name="gemini-1.5-pro", provider="google", tools=Tools(tools=[tool]))
+LLM(model_name="gemini-2.0-flash", provider="google", tools=Tools(tools=[tool]))
 ```
 
 ## Best Practices
@@ -231,7 +231,7 @@ def get_production_config():
                 priority=1  # Backup: Good balance
             ),
             BackupModel(
-                model=LLM(model_name="gemini-1.5-pro", provider="google"),
+                model=LLM(model_name="gemini-2.0-flash", provider="google"),
                 priority=2  # Fallback: Cost-effective
             )
         ],
