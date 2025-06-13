@@ -1,7 +1,7 @@
 import base64
 import io
 import os
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 
 import mammoth
 from google import genai
@@ -11,8 +11,13 @@ if os.getenv("LANGFUSE_HOST"):
 else:
     get_client = None
 
-from v_router.classes.message import Message
-from v_router.classes.response import Content, Response, ToolUse, Usage
+from v_router.classes.messages import (
+    AIMessage,
+    Message,
+    ToolCall,
+    ToolMessage,
+    Usage,
+)
 from v_router.classes.tools import Tools
 from v_router.providers.base import BaseProvider
 
@@ -36,14 +41,14 @@ class GoogleProvider(BaseProvider):
 
     async def create_message(
         self,
-        messages: List[Message],
+        messages: List[Union[Message, AIMessage]],
         model: str,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         tools: Optional[Tools] = None,
         tool_choice: Optional[Any] = None,
         **kwargs,
-    ) -> Response:
+    ) -> AIMessage:
         """Create a message using Google's API."""
         # Convert messages to Google format
         contents = self._format_messages_for_google(messages)
@@ -99,7 +104,7 @@ class GoogleProvider(BaseProvider):
 
                 # Extract content from response
                 content_list = []
-                tool_use_list = []
+                tool_call_list = []
 
                 if response.candidates and response.candidates[0].content.parts:
                     parts = response.candidates[0].content.parts
@@ -107,16 +112,14 @@ class GoogleProvider(BaseProvider):
                     for part in parts:
                         if hasattr(part, "text") and part.text:
                             # Text content
-                            content_list.append(
-                                Content(type="text", role="assistant", text=part.text)
-                            )
+                            content_list.append(part.text)
                         elif hasattr(part, "function_call") and part.function_call:
                             # Function call
-                            tool_use_list.append(
-                                ToolUse(
+                            tool_call_list.append(
+                                ToolCall(
                                     id=f"google_{part.function_call.name}_{id(part)}",  # Google doesn't provide IDs
                                     name=part.function_call.name,
-                                    arguments=dict(part.function_call.args),
+                                    args=dict(part.function_call.args),
                                 )
                             )
 
@@ -154,9 +157,9 @@ class GoogleProvider(BaseProvider):
                     },
                 )
 
-                return Response(
+                return AIMessage(
                     content=content_list,
-                    tool_use=tool_use_list,
+                    tool_calls=tool_call_list,
                     model=model,
                     provider=self.name,
                     usage=usage,
@@ -169,7 +172,7 @@ class GoogleProvider(BaseProvider):
 
             # Extract content from response
             content_list = []
-            tool_use_list = []
+            tool_call_list = []
 
             if response.candidates and response.candidates[0].content.parts:
                 parts = response.candidates[0].content.parts
@@ -177,16 +180,14 @@ class GoogleProvider(BaseProvider):
                 for part in parts:
                     if hasattr(part, "text") and part.text:
                         # Text content
-                        content_list.append(
-                            Content(type="text", role="assistant", text=part.text)
-                        )
+                        content_list.append(part.text)
                     elif hasattr(part, "function_call") and part.function_call:
                         # Function call
-                        tool_use_list.append(
-                            ToolUse(
+                        tool_call_list.append(
+                            ToolCall(
                                 id=f"google_{part.function_call.name}_{id(part)}",  # Google doesn't provide IDs
                                 name=part.function_call.name,
-                                arguments=dict(part.function_call.args),
+                                args=dict(part.function_call.args),
                             )
                         )
 
@@ -215,20 +216,65 @@ class GoogleProvider(BaseProvider):
             except Exception:
                 raw_response = {}
 
-            return Response(
+            return AIMessage(
                 content=content_list,
-                tool_use=tool_use_list,
+                tool_calls=tool_call_list,
                 model=model,
                 provider=self.name,
                 usage=usage,
                 raw_response=raw_response,
             )
 
-    def _format_messages_for_google(self, messages: List[Message]) -> List:
+    def _format_messages_for_google(
+        self, messages: List[Union[Message, AIMessage]]
+    ) -> List:
         """Format messages for Google API."""
         contents = []
         for msg in messages:
-            if msg.role == "system":
+            if isinstance(msg, AIMessage):
+                # Handle AIMessage - preserve tool calls
+                parts = []
+
+                # Add text content if present
+                if msg.content:
+                    if isinstance(msg.content, str):
+                        parts.append(genai.types.Part(text=msg.content))
+                    else:
+                        # List of strings
+                        for text in msg.content:
+                            parts.append(genai.types.Part(text=text))
+
+                # Add tool calls if present
+                if msg.tool_calls:
+                    for tool_call in msg.tool_calls:
+                        parts.append(
+                            genai.types.Part.from_function_call(
+                                name=tool_call.name, args=tool_call.args
+                            )
+                        )
+
+                contents.append(
+                    genai.types.Content(
+                        role="model",  # Google uses "model" instead of "assistant"
+                        parts=parts,
+                    )
+                )
+            elif isinstance(msg, ToolMessage):
+                # Handle tool messages - Google expects function responses as user messages
+                contents.append(
+                    genai.types.Content(
+                        role="user",
+                        parts=[
+                            genai.types.Part.from_function_response(
+                                name=msg.tool_call_id.split("_")[1]
+                                if "_" in msg.tool_call_id
+                                else msg.tool_call_id,
+                                response={"result": msg.get_text_content()},
+                            )
+                        ],
+                    )
+                )
+            elif msg.role == "system":
                 # Google doesn't have a separate system role, so we'll include it as user content
                 contents.append(
                     genai.types.Content(
@@ -404,14 +450,14 @@ class GoogleVertexProvider(BaseProvider):
 
     async def create_message(
         self,
-        messages: List[Message],
+        messages: List[Union[Message, AIMessage]],
         model: str,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         tools: Optional[Tools] = None,
         tool_choice: Optional[Any] = None,
         **kwargs,
-    ) -> Response:
+    ) -> AIMessage:
         """Create a message using Google Vertex AI."""
         # Convert messages to Google format
         contents = self._format_messages_for_google(messages)
@@ -455,7 +501,7 @@ class GoogleVertexProvider(BaseProvider):
 
         # Extract content from response
         content_list = []
-        tool_use_list = []
+        tool_call_list = []
 
         if response.candidates and response.candidates[0].content.parts:
             parts = response.candidates[0].content.parts
@@ -463,16 +509,14 @@ class GoogleVertexProvider(BaseProvider):
             for part in parts:
                 if hasattr(part, "text") and part.text:
                     # Text content
-                    content_list.append(
-                        Content(type="text", role="assistant", text=part.text)
-                    )
+                    content_list.append(part.text)
                 elif hasattr(part, "function_call") and part.function_call:
                     # Function call
-                    tool_use_list.append(
-                        ToolUse(
+                    tool_call_list.append(
+                        ToolCall(
                             id=f"google_{part.function_call.name}_{id(part)}",  # Google doesn't provide IDs
                             name=part.function_call.name,
-                            arguments=dict(part.function_call.args),
+                            args=dict(part.function_call.args),
                         )
                     )
 
@@ -501,20 +545,65 @@ class GoogleVertexProvider(BaseProvider):
         except Exception:
             raw_response = {}
 
-        return Response(
+        return AIMessage(
             content=content_list,
-            tool_use=tool_use_list,
+            tool_calls=tool_call_list,
             model=model,
             provider=self.name,
             usage=usage,
             raw_response=raw_response,
         )
 
-    def _format_messages_for_google(self, messages: List[Message]) -> List:
+    def _format_messages_for_google(
+        self, messages: List[Union[Message, AIMessage]]
+    ) -> List:
         """Format messages for Google API."""
         contents = []
         for msg in messages:
-            if msg.role == "system":
+            if isinstance(msg, AIMessage):
+                # Handle AIMessage - preserve tool calls
+                parts = []
+
+                # Add text content if present
+                if msg.content:
+                    if isinstance(msg.content, str):
+                        parts.append(genai.types.Part(text=msg.content))
+                    else:
+                        # List of strings
+                        for text in msg.content:
+                            parts.append(genai.types.Part(text=text))
+
+                # Add tool calls if present
+                if msg.tool_calls:
+                    for tool_call in msg.tool_calls:
+                        parts.append(
+                            genai.types.Part.from_function_call(
+                                name=tool_call.name, args=tool_call.args
+                            )
+                        )
+
+                contents.append(
+                    genai.types.Content(
+                        role="model",  # Google uses "model" instead of "assistant"
+                        parts=parts,
+                    )
+                )
+            elif isinstance(msg, ToolMessage):
+                # Handle tool messages - Google expects function responses as user messages
+                contents.append(
+                    genai.types.Content(
+                        role="user",
+                        parts=[
+                            genai.types.Part.from_function_response(
+                                name=msg.tool_call_id.split("_")[1]
+                                if "_" in msg.tool_call_id
+                                else msg.tool_call_id,
+                                response={"result": msg.get_text_content()},
+                            )
+                        ],
+                    )
+                )
+            elif msg.role == "system":
                 # Google doesn't have a separate system role, so we'll include it as user content
                 contents.append(
                     genai.types.Content(

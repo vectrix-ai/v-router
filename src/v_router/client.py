@@ -15,7 +15,7 @@ else:
 
 
 from v_router.classes.llm import LLM
-from v_router.providers.base import Message, Response
+from v_router.classes.messages import AIMessage, Message
 from v_router.router import Router
 
 
@@ -32,15 +32,17 @@ class Messages:
         self.router = router
 
     @observe(name="v-router-call", as_type="generation")
-    async def create(self, messages: List[Dict[str, Any]], **kwargs) -> Response:
+    async def create(
+        self, messages: List[Dict[str, Any] | Message], **kwargs
+    ) -> AIMessage:
         """Create a message with automatic fallback handling.
 
         Args:
-            messages: List of message dictionaries with 'role' and 'content'
+            messages: List of message dictionaries with 'role' and 'content' or Message objects
             **kwargs: Additional parameters to pass to the provider
 
         Returns:
-            Response from the successful provider
+            AIMessage from the successful provider
 
         Example:
             response = await client.messages.create(
@@ -51,10 +53,17 @@ class Messages:
             )
 
         """
-        # Convert dict messages to Message objects
-        message_objects = [
-            Message(role=msg["role"], content=msg["content"]) for msg in messages
-        ]
+        # Convert to Message objects if needed
+        message_objects = []
+        for msg in messages:
+            if isinstance(msg, Message | AIMessage):
+                # Already a Message or AIMessage object - pass through as-is
+                message_objects.append(msg)
+            else:
+                # Dictionary, convert to Message
+                message_objects.append(
+                    Message(role=msg["role"], content=msg["content"])
+                )
 
         return await self.router.route_request(message_objects, **kwargs)
 
@@ -104,16 +113,16 @@ class Client:
         self.messages = Messages(self.router)
 
     async def create_message(
-        self, messages: List[Dict[str, Any]], **kwargs
-    ) -> Response:
+        self, messages: List[Dict[str, Any] | Message], **kwargs
+    ) -> AIMessage:
         """Create a message (alternative to client.messages.create).
 
         Args:
-            messages: List of message dictionaries
+            messages: List of message dictionaries or Message objects
             **kwargs: Additional parameters
 
         Returns:
-            Response from the provider
+            AIMessage from the provider
 
         """
         return await self.messages.create(messages, **kwargs)

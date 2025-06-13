@@ -9,8 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from v_router import Client, LLM, BackupModel
 from v_router.classes.tools import ToolCall, Tools
-from v_router.classes.message import Message
-from v_router.classes.response import Response, Content, Usage
+from v_router.classes.messages import AIMessage, Message, Usage
 from v_router.router import Router
 
 
@@ -126,8 +125,8 @@ class TestRouterToolInheritance:
         async def capture_tools(*args, **kwargs):
             nonlocal captured_tools
             captured_tools = kwargs.get('tools')
-            return Response(
-                content=[Content(type="text", role="assistant", text="Success with tools")],
+            return AIMessage(
+                content="Success with tools",
                 model="gpt-4",
                 provider="openai",
                 usage=Usage(input_tokens=10, output_tokens=5),
@@ -149,8 +148,7 @@ class TestRouterToolInheritance:
         response = await router.route_request(messages)
         
         # Verify the backup succeeded
-        assert len(response.content) == 1
-        assert response.content[0].text == "Success with tools"
+        assert response.content == "Success with tools"
         assert response.provider == "openai"
         
         # Verify that tools were inherited by the backup model
@@ -490,5 +488,5 @@ class TestRealAPIToolCalling:
             assert response.content is not None
             
             # Check for tool usage - all providers now use the same format
-            if len(response.tool_use) > 0:
-                assert response.tool_use[0].name == "simple_calculator"
+            if len(response.tool_calls) > 0:
+                assert response.tool_calls[0].name == "simple_calculator"

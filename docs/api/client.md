@@ -55,7 +55,7 @@ response = await client.messages.create(
 
 **Returns:**
 
-- [`Response`](response.md): Unified response object with content, usage, and metadata
+- `AIMessage`: Unified response object with content, usage, and metadata
 
 ## Usage Examples
 
@@ -350,6 +350,6 @@ If `LANGFUSE_HOST` is not set, tracing is automatically disabled with no perform
 
 - [LLM Configuration](llm.md): Configure models and providers
 - [Messages API](messages.md): Message format and options
-- [Response Format](response.md): Understanding response objects
+- AIMessage Format: Understanding response objects
 - [Function Calling Guide](../guide/function-calling.md): Using tools with the client
 - [Provider Configuration](../guide/provider-configuration.md): Provider-specific settings

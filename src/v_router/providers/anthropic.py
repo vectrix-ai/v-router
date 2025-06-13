@@ -1,7 +1,7 @@
 import base64
 import io
 import os
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 
 import mammoth
 from anthropic import AsyncAnthropic, AsyncAnthropicVertex
@@ -12,8 +12,13 @@ if os.getenv("LANGFUSE_HOST"):
 else:
     get_client = None
 
-from v_router.classes.message import Message
-from v_router.classes.response import Content, Response, ToolUse, Usage
+from v_router.classes.messages import (
+    AIMessage,
+    Message,
+    ToolCall,
+    ToolMessage,
+    Usage,
+)
 from v_router.classes.tools import Tools
 from v_router.providers.base import BaseProvider
 
@@ -40,23 +45,63 @@ class AnthropicProvider(BaseProvider):
 
     async def create_message(
         self,
-        messages: List[Message],
+        messages: List[Union[Message, AIMessage]],
         model: str,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         tools: Optional[Tools] = None,
         tool_choice: Optional[Any] = None,
         **kwargs,
-    ) -> Response:
+    ) -> AIMessage:
         """Create a message using Anthropic's API."""
         # Separate system messages from other messages
         system_message = None
         anthropic_messages = []
 
         for msg in messages:
-            if msg.role == "system":
+            if isinstance(msg, AIMessage):
+                # Handle AIMessage - preserve tool calls
+                content = []
+
+                # Add text content if present
+                if msg.content:
+                    if isinstance(msg.content, str):
+                        content.append({"type": "text", "text": msg.content})
+                    else:
+                        # List of strings
+                        for text in msg.content:
+                            content.append({"type": "text", "text": text})
+
+                # Add tool calls if present
+                if msg.tool_calls:
+                    for tool_call in msg.tool_calls:
+                        content.append(
+                            {
+                                "type": "tool_use",
+                                "id": tool_call.id,
+                                "name": tool_call.name,
+                                "input": tool_call.args,
+                            }
+                        )
+
+                anthropic_messages.append({"role": "assistant", "content": content})
+            elif msg.role == "system":
                 # Anthropic expects system as a separate parameter
                 system_message = msg.get_text_content()
+            elif isinstance(msg, ToolMessage):
+                # Handle tool messages - Anthropic expects tool results as user messages
+                anthropic_messages.append(
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": msg.tool_call_id,
+                                "content": msg.get_text_content(),
+                            }
+                        ],
+                    }
+                )
             else:
                 # Convert message content to Anthropic format
                 if isinstance(msg.content, str):
@@ -105,24 +150,22 @@ class AnthropicProvider(BaseProvider):
 
         # Extract content from response
         content_list = []
-        tool_use_list = []
+        tool_call_list = []
 
         if response.content:
             for content_block in response.content:
                 if hasattr(content_block, "text"):
                     # Text content
-                    content_list.append(
-                        Content(type="text", role="assistant", text=content_block.text)
-                    )
+                    content_list.append(content_block.text)
                 elif (
                     hasattr(content_block, "type") and content_block.type == "tool_use"
                 ):
                     # Tool use content
-                    tool_use_list.append(
-                        ToolUse(
+                    tool_call_list.append(
+                        ToolCall(
                             id=content_block.id,
                             name=content_block.name,
-                            arguments=content_block.input,
+                            args=content_block.input,
                         )
                     )
 
@@ -151,9 +194,9 @@ class AnthropicProvider(BaseProvider):
         except Exception:
             raw_response = {}
 
-        return Response(
+        return AIMessage(
             content=content_list,
-            tool_use=tool_use_list,
+            tool_calls=tool_call_list,
             model=response.model,
             provider=self.name,
             usage=usage,
@@ -292,14 +335,14 @@ class AnthropicVertexProvider(BaseProvider):
 
     async def create_message(
         self,
-        messages: List[Message],
+        messages: List[Union[Message, AIMessage]],
         model: str,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         tools: Optional[Tools] = None,
         tool_choice: Optional[Any] = None,
         **kwargs,
-    ) -> Response:
+    ) -> AIMessage:
         """Create a message using Anthropic via Vertex AI."""
         # Separate system messages from other messages
         system_message = None
@@ -309,6 +352,20 @@ class AnthropicVertexProvider(BaseProvider):
             if msg.role == "system":
                 # Anthropic expects system as a separate parameter
                 system_message = msg.get_text_content()
+            elif isinstance(msg, ToolMessage):
+                # Handle tool messages - Anthropic expects tool results as user messages
+                anthropic_messages.append(
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": msg.tool_call_id,
+                                "content": msg.get_text_content(),
+                            }
+                        ],
+                    }
+                )
             else:
                 # Convert message content to Anthropic format
                 if isinstance(msg.content, str):
@@ -357,24 +414,22 @@ class AnthropicVertexProvider(BaseProvider):
 
         # Extract content from response
         content_list = []
-        tool_use_list = []
+        tool_call_list = []
 
         if response.content:
             for content_block in response.content:
                 if hasattr(content_block, "text"):
                     # Text content
-                    content_list.append(
-                        Content(type="text", role="assistant", text=content_block.text)
-                    )
+                    content_list.append(content_block.text)
                 elif (
                     hasattr(content_block, "type") and content_block.type == "tool_use"
                 ):
                     # Tool use content
-                    tool_use_list.append(
-                        ToolUse(
+                    tool_call_list.append(
+                        ToolCall(
                             id=content_block.id,
                             name=content_block.name,
-                            arguments=content_block.input,
+                            args=content_block.input,
                         )
                     )
 
@@ -403,9 +458,9 @@ class AnthropicVertexProvider(BaseProvider):
         except Exception:
             raw_response = {}
 
-        return Response(
+        return AIMessage(
             content=content_list,
-            tool_use=tool_use_list,
+            tool_calls=tool_call_list,
             model=response.model,
             provider=self.name,
             usage=usage,

@@ -76,12 +76,12 @@ response = await client.messages.create(
 )
 ```
 
-### Response Format
+### AIMessage Format
 
-All providers return the same unified response format:
+All providers return the same unified AIMessage format:
 
 ```python
-# Response object
+# AIMessage object
 print(response.content[0].text)    # The generated text
 print(response.model)              # Model that was actually used
 print(response.provider)           # Provider that was used

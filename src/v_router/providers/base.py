@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Union
 
-from v_router.classes.message import Message
-from v_router.classes.response import Response
+from v_router.classes.messages import AIMessage, Message
 from v_router.classes.tools import Tools
 
 
@@ -23,13 +22,13 @@ class BaseProvider(ABC):
     @abstractmethod
     async def create_message(
         self,
-        messages: List[Message],
+        messages: List[Union[Message, AIMessage]],
         model: str,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         tools: Optional[Tools] = None,
         **kwargs,
-    ) -> Response:
+    ) -> AIMessage:
         """Create a message using the provider's API.
 
         Args:
@@ -41,7 +40,7 @@ class BaseProvider(ABC):
             **kwargs: Additional provider-specific parameters
 
         Returns:
-            Response from the provider
+            AIMessage from the provider
 
         """
         pass

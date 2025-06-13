@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Dict, List, Type
+from typing import Dict, List, Type, Union
 
 import yaml
 
@@ -10,9 +10,10 @@ else:
     get_client = None
 
 from v_router.classes.llm import LLM
+from v_router.classes.messages import AIMessage, Message
 from v_router.logger import setup_logger
 from v_router.providers.anthropic import AnthropicProvider, AnthropicVertexProvider
-from v_router.providers.base import BaseProvider, Message, Response
+from v_router.providers.base import BaseProvider
 from v_router.providers.google import GoogleProvider, GoogleVertexProvider
 from v_router.providers.openai import AzureOpenAIProvider, OpenAIProvider
 
@@ -146,7 +147,9 @@ class Router:
 
         return self._provider_instances[provider_name]
 
-    async def route_request(self, messages: List[Message], **kwargs) -> Response:
+    async def route_request(
+        self, messages: List[Union[Message, AIMessage]], **kwargs
+    ) -> AIMessage:
         """Route a request with automatic fallback handling.
 
         Args:
@@ -154,7 +157,7 @@ class Router:
             **kwargs: Additional parameters to pass to the provider
 
         Returns:
-            Response from the successful provider
+            AIMessage from the successful provider
 
         Raises:
             Exception: If all providers fail
@@ -270,8 +273,8 @@ class Router:
         raise Exception(f"All providers failed:\n{error_summary}")
 
     async def _try_provider(
-        self, llm_config: LLM, messages: List[Message], **kwargs
-    ) -> Response:
+        self, llm_config: LLM, messages: List[Union[Message, AIMessage]], **kwargs
+    ) -> AIMessage:
         """Try to send a request to a specific provider.
 
         Args:
@@ -280,7 +283,7 @@ class Router:
             **kwargs: Additional parameters
 
         Returns:
-            Response from the provider
+            AIMessage from the provider
 
         """
         provider = self._get_provider(llm_config.provider)

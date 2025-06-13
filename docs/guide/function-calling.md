@@ -20,6 +20,7 @@ import asyncio
 from pydantic import BaseModel, Field
 from v_router import Client, LLM
 from v_router.classes.tools import ToolCall, Tools
+from v_router.classes.messages import HumanMessage, ToolMessage
 
 # Define tool schema using Pydantic
 class WeatherQuery(BaseModel):
@@ -424,6 +425,98 @@ async def chat_with_tools():
 
 asyncio.run(chat_with_tools())
 ```
+
+### Using ToolMessage for Tool Results
+
+v-router now provides a `ToolMessage` class for seamless tool result handling across all providers:
+
+```python
+import asyncio
+from v_router import Client, LLM
+from v_router.classes.messages import HumanMessage, ToolMessage
+from v_router.classes.tools import ToolCall
+from pydantic import BaseModel, Field
+
+class Calculator(BaseModel):
+    operation: str = Field(..., description="Operation: add, subtract, multiply, divide")
+    a: float = Field(..., description="First number")
+    b: float = Field(..., description="Second number")
+
+async def execute_calculator(operation: str, a: float, b: float):
+    """Execute calculator operations."""
+    if operation == "add":
+        return a + b
+    elif operation == "subtract":
+        return a - b
+    elif operation == "multiply":
+        return a * b
+    elif operation == "divide":
+        return a / b if b != 0 else "Error: Division by zero"
+    return "Error: Unknown operation"
+
+async def chat_with_tool_messages():
+    # Define calculator tool
+    calc_tool = ToolCall(
+        name="calculator",
+        description="Perform basic mathematical operations",
+        input_schema=Calculator.model_json_schema()
+    )
+    
+    # Create client with tool
+    llm_config = LLM(
+        model_name="claude-sonnet-4",
+        provider="anthropic",
+        tools=[calc_tool]
+    )
+    
+    client = Client(llm_config)
+    
+    # Start conversation with HumanMessage
+    messages = [
+        HumanMessage("What is 25 times 4?")
+    ]
+    
+    # Get initial response
+    response = await client.messages.create(messages=messages)
+    
+    # Add assistant response
+    messages.append({
+        "role": "assistant",
+        "content": response.content[0].text if response.content else ""
+    })
+    
+    # Handle tool calls
+    if response.tool_calls:
+        for tool_call in response.tool_calls:
+            # Execute the tool
+            result = await execute_calculator(**tool_call.args)
+            
+            # Add tool result using ToolMessage
+            tool_message = ToolMessage(
+                content=f"The result is: {result}",
+                tool_call_id=tool_call.id,
+                status="success"
+            )
+            messages.append(tool_message)
+        
+        # Get final response with tool results
+        final_response = await client.messages.create(messages=messages)
+        print(f"🤖 {final_response.content[0].text}")
+    
+asyncio.run(chat_with_tool_messages())
+```
+
+### ToolMessage Benefits
+
+The `ToolMessage` class provides:
+
+1. **Unified Interface**: Same syntax works across all providers
+2. **Automatic Formatting**: v-router converts to provider-specific formats:
+   - OpenAI: `{"role": "tool", "content": result, "tool_call_id": id}`
+   - Anthropic: `{"role": "user", "content": [{"type": "tool_result", "tool_use_id": id, "content": result}]}`
+   - Google: User message with function_response part
+3. **Type Safety**: Ensures required fields are present
+4. **Status Tracking**: Optional status field for error handling
 
 ## Provider Compatibility
 

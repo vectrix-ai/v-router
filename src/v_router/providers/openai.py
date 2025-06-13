@@ -2,14 +2,19 @@ import base64
 import io
 import json
 import os
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 
 import mammoth
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
-from v_router.classes.message import Message
-from v_router.classes.response import Content, Response, ToolUse, Usage
+from v_router.classes.messages import (
+    AIMessage,
+    Message,
+    ToolCall,
+    ToolMessage,
+    Usage,
+)
 from v_router.classes.tools import Tools
 from v_router.providers.base import BaseProvider
 
@@ -33,14 +38,14 @@ class OpenAIProvider(BaseProvider):
 
     async def create_message(
         self,
-        messages: List[Message],
+        messages: List[Union[Message, AIMessage]],
         model: str,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         tools: Optional[Tools] = None,
         tool_choice: Optional[Any] = None,
         **kwargs,
-    ) -> Response:
+    ) -> AIMessage:
         """Create a message using OpenAI's API."""
         # Check if we have PDF content
         has_pdf_content = self._has_pdf_content(messages)
@@ -70,17 +75,28 @@ class OpenAIProvider(BaseProvider):
 
     async def _create_message_with_responses_api(
         self,
-        messages: List[Message],
+        messages: List[Union[Message, AIMessage]],
         model: str,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         **kwargs,
-    ) -> Response:
+    ) -> AIMessage:
         """Create message using OpenAI responses API for enhanced content support."""
         # Convert messages to new input format for responses API
         input_messages = []
         for msg in messages:
-            if isinstance(msg.content, str):
+            if isinstance(msg, AIMessage):
+                # Handle AIMessage - Note: responses API doesn't support tool calls in the same way
+                # So we just extract the text content
+                input_messages.append(
+                    {
+                        "role": "assistant",
+                        "content": [
+                            {"type": "input_text", "text": msg.get_text_content()}
+                        ],
+                    }
+                )
+            elif isinstance(msg.content, str):
                 # Simple string content
                 input_messages.append(
                     {
@@ -113,7 +129,7 @@ class OpenAIProvider(BaseProvider):
 
         # Extract content from responses API response
         content_list = []
-        tool_use_list = []
+        tool_call_list = []
 
         if response.output and len(response.output) > 0:
             output_message = response.output[0]
@@ -122,11 +138,7 @@ class OpenAIProvider(BaseProvider):
             if hasattr(output_message, "content") and output_message.content:
                 for content_item in output_message.content:
                     if hasattr(content_item, "text"):
-                        content_list.append(
-                            Content(
-                                type="text", role="assistant", text=content_item.text
-                            )
-                        )
+                        content_list.append(content_item.text)
 
         # Build usage object for responses API
         usage = Usage(
@@ -153,9 +165,9 @@ class OpenAIProvider(BaseProvider):
         except Exception:
             raw_response = {}
 
-        return Response(
+        return AIMessage(
             content=content_list,
-            tool_use=tool_use_list,
+            tool_calls=tool_call_list,
             model=response.model,
             provider=self.name,
             usage=usage,
@@ -164,19 +176,47 @@ class OpenAIProvider(BaseProvider):
 
     async def _create_message_with_chat_completions(
         self,
-        messages: List[Message],
+        messages: List[Union[Message, AIMessage]],
         model: str,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         tools: Optional[Tools] = None,
         tool_choice: Optional[Any] = None,
         **kwargs,
-    ) -> Response:
+    ) -> AIMessage:
         """Create message using OpenAI chat completions API for compatibility with tools."""
         # Convert messages to OpenAI format
         openai_messages = []
         for msg in messages:
-            if isinstance(msg.content, str):
+            if isinstance(msg, AIMessage):
+                # Handle AIMessage - preserve tool calls
+                openai_msg = {"role": "assistant", "content": msg.get_text_content()}
+
+                # Add tool calls if present
+                if msg.tool_calls:
+                    openai_msg["tool_calls"] = [
+                        {
+                            "id": tool_call.id,
+                            "type": "function",
+                            "function": {
+                                "name": tool_call.name,
+                                "arguments": json.dumps(tool_call.args),
+                            },
+                        }
+                        for tool_call in msg.tool_calls
+                    ]
+
+                openai_messages.append(openai_msg)
+            elif isinstance(msg, ToolMessage):
+                # Handle tool messages
+                openai_messages.append(
+                    {
+                        "role": "tool",
+                        "content": msg.get_text_content(),
+                        "tool_call_id": msg.tool_call_id,
+                    }
+                )
+            elif isinstance(msg.content, str):
                 # Simple string content
                 openai_messages.append({"role": msg.role, "content": msg.content})
             else:
@@ -214,26 +254,24 @@ class OpenAIProvider(BaseProvider):
 
         # Extract content from response
         content_list = []
-        tool_use_list = []
+        tool_call_list = []
 
         if response.choices and response.choices[0].message:
             message = response.choices[0].message
 
             # Add text content if present
             if message.content:
-                content_list.append(
-                    Content(type="text", role="assistant", text=message.content)
-                )
+                content_list.append(message.content)
 
             # Check if there are tool calls
             if hasattr(message, "tool_calls") and message.tool_calls:
                 for tool_call in message.tool_calls:
                     if tool_call.function:
-                        tool_use_list.append(
-                            ToolUse(
+                        tool_call_list.append(
+                            ToolCall(
                                 id=tool_call.id,
                                 name=tool_call.function.name,
-                                arguments=json.loads(
+                                args=json.loads(
                                     tool_call.function.arguments
                                 ),  # OpenAI returns as JSON string
                             )
@@ -264,9 +302,9 @@ class OpenAIProvider(BaseProvider):
         except Exception:
             raw_response = {}
 
-        return Response(
+        return AIMessage(
             content=content_list,
-            tool_use=tool_use_list,
+            tool_calls=tool_call_list,
             model=response.model,
             provider=self.name,
             usage=usage,
@@ -489,14 +527,14 @@ class AzureOpenAIProvider(BaseProvider):
 
     async def create_message(
         self,
-        messages: List[Message],
+        messages: List[Union[Message, AIMessage]],
         model: str,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         tools: Optional[Tools] = None,
         tool_choice: Optional[Any] = None,
         **kwargs,
-    ) -> Response:
+    ) -> AIMessage:
         """Create a message using Azure OpenAI's API.
 
         Note: In Azure, the model parameter refers to your deployment name,
@@ -505,7 +543,16 @@ class AzureOpenAIProvider(BaseProvider):
         # Convert messages to OpenAI format
         openai_messages = []
         for msg in messages:
-            if isinstance(msg.content, str):
+            if isinstance(msg, ToolMessage):
+                # Handle tool messages
+                openai_messages.append(
+                    {
+                        "role": "tool",
+                        "content": msg.get_text_content(),
+                        "tool_call_id": msg.tool_call_id,
+                    }
+                )
+            elif isinstance(msg.content, str):
                 # Simple string content
                 openai_messages.append({"role": msg.role, "content": msg.content})
             else:
@@ -543,26 +590,24 @@ class AzureOpenAIProvider(BaseProvider):
 
         # Extract content from response
         content_list = []
-        tool_use_list = []
+        tool_call_list = []
 
         if response.choices and response.choices[0].message:
             message = response.choices[0].message
 
             # Add text content if present
             if message.content:
-                content_list.append(
-                    Content(type="text", role="assistant", text=message.content)
-                )
+                content_list.append(message.content)
 
             # Check if there are tool calls
             if hasattr(message, "tool_calls") and message.tool_calls:
                 for tool_call in message.tool_calls:
                     if tool_call.function:
-                        tool_use_list.append(
-                            ToolUse(
+                        tool_call_list.append(
+                            ToolCall(
                                 id=tool_call.id,
                                 name=tool_call.function.name,
-                                arguments=json.loads(
+                                args=json.loads(
                                     tool_call.function.arguments
                                 ),  # OpenAI returns as JSON string
                             )
@@ -593,9 +638,9 @@ class AzureOpenAIProvider(BaseProvider):
         except Exception:
             raw_response = {}
 
-        return Response(
+        return AIMessage(
             content=content_list,
-            tool_use=tool_use_list,
+            tool_calls=tool_call_list,
             model=response.model,
             provider=self.name,
             usage=usage,
