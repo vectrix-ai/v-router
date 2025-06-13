@@ -11,8 +11,8 @@ if os.getenv("LANGFUSE_HOST"):
 else:
     get_client = None
 
-from v_router.classes.message import Message
-from v_router.classes.response import Content, Response, ToolUse, Usage
+from v_router.classes.messages import Message
+from v_router.classes.response import AIMessage, Content, ToolCall, Usage
 from v_router.classes.tools import Tools
 from v_router.providers.base import BaseProvider
 
@@ -43,7 +43,7 @@ class GoogleProvider(BaseProvider):
         tools: Optional[Tools] = None,
         tool_choice: Optional[Any] = None,
         **kwargs,
-    ) -> Response:
+    ) -> AIMessage:
         """Create a message using Google's API."""
         # Convert messages to Google format
         contents = self._format_messages_for_google(messages)
@@ -99,7 +99,7 @@ class GoogleProvider(BaseProvider):
 
                 # Extract content from response
                 content_list = []
-                tool_use_list = []
+                tool_call_list = []
 
                 if response.candidates and response.candidates[0].content.parts:
                     parts = response.candidates[0].content.parts
@@ -112,11 +112,11 @@ class GoogleProvider(BaseProvider):
                             )
                         elif hasattr(part, "function_call") and part.function_call:
                             # Function call
-                            tool_use_list.append(
-                                ToolUse(
+                            tool_call_list.append(
+                                ToolCall(
                                     id=f"google_{part.function_call.name}_{id(part)}",  # Google doesn't provide IDs
                                     name=part.function_call.name,
-                                    arguments=dict(part.function_call.args),
+                                    args=dict(part.function_call.args),
                                 )
                             )
 
@@ -154,9 +154,9 @@ class GoogleProvider(BaseProvider):
                     },
                 )
 
-                return Response(
+                return AIMessage(
                     content=content_list,
-                    tool_use=tool_use_list,
+                    tool_calls=tool_call_list,
                     model=model,
                     provider=self.name,
                     usage=usage,
@@ -169,7 +169,7 @@ class GoogleProvider(BaseProvider):
 
             # Extract content from response
             content_list = []
-            tool_use_list = []
+            tool_call_list = []
 
             if response.candidates and response.candidates[0].content.parts:
                 parts = response.candidates[0].content.parts
@@ -182,11 +182,11 @@ class GoogleProvider(BaseProvider):
                         )
                     elif hasattr(part, "function_call") and part.function_call:
                         # Function call
-                        tool_use_list.append(
-                            ToolUse(
+                        tool_call_list.append(
+                            ToolCall(
                                 id=f"google_{part.function_call.name}_{id(part)}",  # Google doesn't provide IDs
                                 name=part.function_call.name,
-                                arguments=dict(part.function_call.args),
+                                args=dict(part.function_call.args),
                             )
                         )
 
@@ -215,9 +215,9 @@ class GoogleProvider(BaseProvider):
             except Exception:
                 raw_response = {}
 
-            return Response(
+            return AIMessage(
                 content=content_list,
-                tool_use=tool_use_list,
+                tool_calls=tool_call_list,
                 model=model,
                 provider=self.name,
                 usage=usage,
@@ -411,7 +411,7 @@ class GoogleVertexProvider(BaseProvider):
         tools: Optional[Tools] = None,
         tool_choice: Optional[Any] = None,
         **kwargs,
-    ) -> Response:
+    ) -> AIMessage:
         """Create a message using Google Vertex AI."""
         # Convert messages to Google format
         contents = self._format_messages_for_google(messages)
@@ -455,7 +455,7 @@ class GoogleVertexProvider(BaseProvider):
 
         # Extract content from response
         content_list = []
-        tool_use_list = []
+        tool_call_list = []
 
         if response.candidates and response.candidates[0].content.parts:
             parts = response.candidates[0].content.parts
@@ -468,11 +468,11 @@ class GoogleVertexProvider(BaseProvider):
                     )
                 elif hasattr(part, "function_call") and part.function_call:
                     # Function call
-                    tool_use_list.append(
-                        ToolUse(
+                    tool_call_list.append(
+                        ToolCall(
                             id=f"google_{part.function_call.name}_{id(part)}",  # Google doesn't provide IDs
                             name=part.function_call.name,
-                            arguments=dict(part.function_call.args),
+                            args=dict(part.function_call.args),
                         )
                     )
 
@@ -501,9 +501,9 @@ class GoogleVertexProvider(BaseProvider):
         except Exception:
             raw_response = {}
 
-        return Response(
+        return AIMessage(
             content=content_list,
-            tool_use=tool_use_list,
+            tool_calls=tool_call_list,
             model=model,
             provider=self.name,
             usage=usage,

@@ -238,11 +238,11 @@ class TestToolCallingIntegration:
         
         # Response should contain tool calls
         assert response.provider == "anthropic"
-        assert len(response.tool_use) > 0
+        assert len(response.tool_calls) > 0
         
         # Check the tool use
-        assert response.tool_use[0].name == "get_weather"
-        assert "location" in response.tool_use[0].arguments
+        assert response.tool_calls[0].name == "get_weather"
+        assert "location" in response.tool_calls[0].args
     
     @pytest.mark.asyncio
     @pytest.mark.integration
@@ -268,14 +268,14 @@ class TestToolCallingIntegration:
         
         # Response should contain tool calls
         assert response.provider == "openai"
-        assert len(response.tool_use) > 0
+        assert len(response.tool_calls) > 0
         
         # Check the tool use
-        tool_use = response.tool_use[0]
-        assert tool_use.name == "calculator"
-        assert "operation" in tool_use.arguments
-        assert "a" in tool_use.arguments
-        assert "b" in tool_use.arguments
+        tool_call = response.tool_calls[0]
+        assert tool_call.name == "calculator"
+        assert "operation" in tool_call.args
+        assert "a" in tool_call.args
+        assert "b" in tool_call.args
     
     @pytest.mark.asyncio
     @pytest.mark.integration
@@ -301,11 +301,11 @@ class TestToolCallingIntegration:
         
         # Response should contain function calls
         assert response.provider == "google"
-        assert len(response.tool_use) > 0
+        assert len(response.tool_calls) > 0
         
         # Check the tool use
-        assert response.tool_use[0].name == "calculator"
-        assert "operation" in response.tool_use[0].arguments
+        assert response.tool_calls[0].name == "calculator"
+        assert "operation" in response.tool_calls[0].args
     
     @pytest.mark.asyncio
     @pytest.mark.integration
@@ -345,8 +345,8 @@ class TestToolCallingIntegration:
         assert response.provider == "openai"
         
         # Should have made a tool call (tools were inherited)
-        if len(response.tool_use) > 0:  # OpenAI might or might not use tools depending on the query
-            assert response.tool_use[0].name == "calculator"
+        if len(response.tool_calls) > 0:  # OpenAI might or might not use tools depending on the query
+            assert response.tool_calls[0].name == "calculator"
     
     @pytest.mark.asyncio
     @pytest.mark.integration
@@ -384,8 +384,8 @@ class TestToolCallingIntegration:
         
         # Should contain tool calls regardless of which provider was used
         if response.provider == "anthropic":
-            if len(response.tool_use) > 0:  # Anthropic might decide to use tools
-                assert response.tool_use[0].name == "get_weather"
+            if len(response.tool_calls) > 0:  # Anthropic might decide to use tools
+                assert response.tool_calls[0].name == "get_weather"
 
 
 class TestToolCallingErrorHandling:

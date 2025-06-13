@@ -1,6 +1,6 @@
 import pytest
 
-from v_router.classes.response import Response, Content, ToolUse, Usage
+from v_router.classes.response import AIMessage, Content, ToolCall, Usage
 
 
 class TestContent:
@@ -47,26 +47,26 @@ class TestContent:
             )
 
 
-class TestToolUse:
-    """Test the ToolUse model."""
+class TestToolCall:
+    """Test the ToolCall model."""
     
-    def test_tool_use_creation(self):
-        """Test creating a tool use object."""
-        tool_use = ToolUse(
+    def test_tool_call_creation(self):
+        """Test creating a tool call object."""
+        tool_call = ToolCall(
             id="tool_123",
             name="get_weather",
-            arguments={"location": "San Francisco"}
+            args={"location": "San Francisco"}
         )
-        assert tool_use.id == "tool_123"
-        assert tool_use.name == "get_weather"
-        assert tool_use.arguments == {"location": "San Francisco"}
+        assert tool_call.id == "tool_123"
+        assert tool_call.name == "get_weather"
+        assert tool_call.args == {"location": "San Francisco"}
     
-    def test_tool_use_with_complex_arguments(self):
-        """Test tool use with complex arguments."""
-        tool_use = ToolUse(
+    def test_tool_call_with_complex_args(self):
+        """Test tool call with complex arguments."""
+        tool_call = ToolCall(
             id="tool_456",
             name="search",
-            arguments={
+            args={
                 "query": "python tutorials",
                 "filters": {
                     "date": "2024",
@@ -75,10 +75,10 @@ class TestToolUse:
                 "limit": 10
             }
         )
-        assert tool_use.id == "tool_456"
-        assert tool_use.name == "search"
-        assert tool_use.arguments["filters"]["date"] == "2024"
-        assert tool_use.arguments["limit"] == 10
+        assert tool_call.id == "tool_456"
+        assert tool_call.name == "search"
+        assert tool_call.args["filters"]["date"] == "2024"
+        assert tool_call.args["limit"] == 10
 
 
 class TestUsage:
@@ -112,12 +112,12 @@ class TestUsage:
         assert usage.output_tokens is None
 
 
-class TestResponse:
-    """Test the Response model."""
+class TestAIMessage:
+    """Test the AIMessage model."""
     
     def test_response_text_only(self):
         """Test response with text content only."""
-        response = Response(
+        response = AIMessage(
             content=[
                 Content(
                     type="text",
@@ -125,7 +125,7 @@ class TestResponse:
                     text="Hello, how can I help you?"
                 )
             ],
-            tool_use=[],
+            tool_calls=[],
             usage=Usage(input_tokens=10, output_tokens=8),
             model="gpt-4.1-nano",
             provider="openai",
@@ -134,16 +134,16 @@ class TestResponse:
         
         assert len(response.content) == 1
         assert response.content[0].text == "Hello, how can I help you?"
-        assert len(response.tool_use) == 0
+        assert len(response.tool_calls) == 0
         assert response.usage.input_tokens == 10
         assert response.usage.output_tokens == 8
         assert response.model == "gpt-4.1-nano"
         assert response.provider == "openai"
         assert response.raw_response == {"test": "data"}
     
-    def test_response_with_tool_use(self):
-        """Test response with tool use."""
-        response = Response(
+    def test_response_with_tool_calls(self):
+        """Test response with tool calls."""
+        response = AIMessage(
             content=[
                 Content(
                     type="text",
@@ -151,11 +151,11 @@ class TestResponse:
                     text="I'll check the weather for you."
                 )
             ],
-            tool_use=[
-                ToolUse(
+            tool_calls=[
+                ToolCall(
                     id="tool_001",
                     name="get_weather",
-                    arguments={"location": "New York"}
+                    args={"location": "New York"}
                 )
             ],
             usage=Usage(input_tokens=15, output_tokens=20),
@@ -166,13 +166,13 @@ class TestResponse:
         
         assert len(response.content) == 1
         assert response.content[0].text == "I'll check the weather for you."
-        assert len(response.tool_use) == 1
-        assert response.tool_use[0].name == "get_weather"
-        assert response.tool_use[0].arguments["location"] == "New York"
+        assert len(response.tool_calls) == 1
+        assert response.tool_calls[0].name == "get_weather"
+        assert response.tool_calls[0].args["location"] == "New York"
     
     def test_response_multiple_contents(self):
         """Test response with multiple content blocks."""
-        response = Response(
+        response = AIMessage(
             content=[
                 Content(
                     type="text",
@@ -185,7 +185,7 @@ class TestResponse:
                     text="Second part of response."
                 )
             ],
-            tool_use=[],
+            tool_calls=[],
             usage=Usage(input_tokens=20, output_tokens=15),
             model="gemini-pro",
             provider="google",
@@ -196,9 +196,9 @@ class TestResponse:
         assert response.content[0].text == "First part of response."
         assert response.content[1].text == "Second part of response."
     
-    def test_response_multiple_tool_uses(self):
-        """Test response with multiple tool uses."""
-        response = Response(
+    def test_response_multiple_tool_calls(self):
+        """Test response with multiple tool calls."""
+        response = AIMessage(
             content=[
                 Content(
                     type="text",
@@ -206,16 +206,16 @@ class TestResponse:
                     text="I'll help you with both requests."
                 )
             ],
-            tool_use=[
-                ToolUse(
+            tool_calls=[
+                ToolCall(
                     id="tool_001",
                     name="get_weather",
-                    arguments={"location": "Paris"}
+                    args={"location": "Paris"}
                 ),
-                ToolUse(
+                ToolCall(
                     id="tool_002",
                     name="get_time",
-                    arguments={"timezone": "Europe/Paris"}
+                    args={"timezone": "Europe/Paris"}
                 )
             ],
             usage=Usage(input_tokens=25, output_tokens=30),
@@ -224,13 +224,13 @@ class TestResponse:
             raw_response={}
         )
         
-        assert len(response.tool_use) == 2
-        assert response.tool_use[0].name == "get_weather"
-        assert response.tool_use[1].name == "get_time"
+        assert len(response.tool_calls) == 2
+        assert response.tool_calls[0].name == "get_weather"
+        assert response.tool_calls[1].name == "get_time"
     
-    def test_response_empty_tool_use_default(self):
-        """Test that tool_use defaults to empty list."""
-        response = Response(
+    def test_response_empty_tool_calls_default(self):
+        """Test that tool_calls defaults to empty list."""
+        response = AIMessage(
             content=[
                 Content(
                     type="text",
@@ -244,4 +244,4 @@ class TestResponse:
             raw_response={}
         )
         
-        assert response.tool_use == []
+        assert response.tool_calls == []

@@ -8,8 +8,8 @@ import mammoth
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
-from v_router.classes.message import Message
-from v_router.classes.response import Content, Response, ToolUse, Usage
+from v_router.classes.messages import Message
+from v_router.classes.response import AIMessage, Content, ToolCall, Usage
 from v_router.classes.tools import Tools
 from v_router.providers.base import BaseProvider
 
@@ -40,7 +40,7 @@ class OpenAIProvider(BaseProvider):
         tools: Optional[Tools] = None,
         tool_choice: Optional[Any] = None,
         **kwargs,
-    ) -> Response:
+    ) -> AIMessage:
         """Create a message using OpenAI's API."""
         # Check if we have PDF content
         has_pdf_content = self._has_pdf_content(messages)
@@ -75,7 +75,7 @@ class OpenAIProvider(BaseProvider):
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         **kwargs,
-    ) -> Response:
+    ) -> AIMessage:
         """Create message using OpenAI responses API for enhanced content support."""
         # Convert messages to new input format for responses API
         input_messages = []
@@ -113,7 +113,7 @@ class OpenAIProvider(BaseProvider):
 
         # Extract content from responses API response
         content_list = []
-        tool_use_list = []
+        tool_call_list = []
 
         if response.output and len(response.output) > 0:
             output_message = response.output[0]
@@ -153,9 +153,9 @@ class OpenAIProvider(BaseProvider):
         except Exception:
             raw_response = {}
 
-        return Response(
+        return AIMessage(
             content=content_list,
-            tool_use=tool_use_list,
+            tool_calls=tool_call_list,
             model=response.model,
             provider=self.name,
             usage=usage,
@@ -171,7 +171,7 @@ class OpenAIProvider(BaseProvider):
         tools: Optional[Tools] = None,
         tool_choice: Optional[Any] = None,
         **kwargs,
-    ) -> Response:
+    ) -> AIMessage:
         """Create message using OpenAI chat completions API for compatibility with tools."""
         # Convert messages to OpenAI format
         openai_messages = []
@@ -214,7 +214,7 @@ class OpenAIProvider(BaseProvider):
 
         # Extract content from response
         content_list = []
-        tool_use_list = []
+        tool_call_list = []
 
         if response.choices and response.choices[0].message:
             message = response.choices[0].message
@@ -229,11 +229,11 @@ class OpenAIProvider(BaseProvider):
             if hasattr(message, "tool_calls") and message.tool_calls:
                 for tool_call in message.tool_calls:
                     if tool_call.function:
-                        tool_use_list.append(
-                            ToolUse(
+                        tool_call_list.append(
+                            ToolCall(
                                 id=tool_call.id,
                                 name=tool_call.function.name,
-                                arguments=json.loads(
+                                args=json.loads(
                                     tool_call.function.arguments
                                 ),  # OpenAI returns as JSON string
                             )
@@ -264,9 +264,9 @@ class OpenAIProvider(BaseProvider):
         except Exception:
             raw_response = {}
 
-        return Response(
+        return AIMessage(
             content=content_list,
-            tool_use=tool_use_list,
+            tool_calls=tool_call_list,
             model=response.model,
             provider=self.name,
             usage=usage,
@@ -496,7 +496,7 @@ class AzureOpenAIProvider(BaseProvider):
         tools: Optional[Tools] = None,
         tool_choice: Optional[Any] = None,
         **kwargs,
-    ) -> Response:
+    ) -> AIMessage:
         """Create a message using Azure OpenAI's API.
 
         Note: In Azure, the model parameter refers to your deployment name,
@@ -543,7 +543,7 @@ class AzureOpenAIProvider(BaseProvider):
 
         # Extract content from response
         content_list = []
-        tool_use_list = []
+        tool_call_list = []
 
         if response.choices and response.choices[0].message:
             message = response.choices[0].message
@@ -558,11 +558,11 @@ class AzureOpenAIProvider(BaseProvider):
             if hasattr(message, "tool_calls") and message.tool_calls:
                 for tool_call in message.tool_calls:
                     if tool_call.function:
-                        tool_use_list.append(
-                            ToolUse(
+                        tool_call_list.append(
+                            ToolCall(
                                 id=tool_call.id,
                                 name=tool_call.function.name,
-                                arguments=json.loads(
+                                args=json.loads(
                                     tool_call.function.arguments
                                 ),  # OpenAI returns as JSON string
                             )
@@ -593,9 +593,9 @@ class AzureOpenAIProvider(BaseProvider):
         except Exception:
             raw_response = {}
 
-        return Response(
+        return AIMessage(
             content=content_list,
-            tool_use=tool_use_list,
+            tool_calls=tool_call_list,
             model=response.model,
             provider=self.name,
             usage=usage,

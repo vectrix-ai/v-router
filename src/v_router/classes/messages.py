@@ -190,3 +190,124 @@ class Message(BaseModel):
                     text_parts.append(f"[{item.type}]")
             return " ".join(text_parts)
         return ""
+
+
+class HumanMessage(Message):
+    """Message from a human user.
+
+    HumanMessages are messages that are passed in from a human to the model.
+    The role is always set to "user" and cannot be changed.
+
+    Example:
+        >>> from v_router.classes.message import HumanMessage
+        >>>
+        >>> # Simple text message
+        >>> msg = HumanMessage("What's the weather?")
+        >>>
+        >>> # With image
+        >>> msg = HumanMessage("/path/to/image.png")
+        >>>
+        >>> # With optional fields
+        >>> msg = HumanMessage(
+        ...     content="Hello",
+        ...     name="John",
+        ...     id="msg-123"
+        ... )
+
+    """
+
+    role: Literal["user"] = Field(
+        default="user",
+        description="Role is always 'user' for HumanMessage.",
+    )
+    name: Union[str, None] = Field(
+        default=None,
+        description="An optional name for the message. This can be used to provide a human-readable name.",
+    )
+    id: Union[str, None] = Field(
+        default=None,
+        description="An optional unique identifier for the message.",
+    )
+    example: bool = Field(
+        default=False,
+        description="Use to denote that a message is part of an example conversation. Usage is discouraged.",
+    )
+
+    def __init__(self, content: Union[str, List[ContentType], None] = None, **kwargs):
+        """Initialize a HumanMessage.
+
+        Args:
+            content: The content of the message as a positional argument.
+            **kwargs: Additional fields to pass to the message.
+
+        """
+        if content is not None:
+            kwargs["content"] = content
+        kwargs["role"] = "user"  # Always set role to "user"
+        super().__init__(**kwargs)
+
+    def text(self) -> str:
+        """Get the text content of the message.
+
+        Returns:
+            The text content of the message.
+
+        """
+        return self.get_text_content()
+
+
+class SystemMessage(Message):
+    """Message from the system.
+
+    SystemMessages are messages that provide context or instructions to the model.
+    The role is always set to "system" and cannot be changed.
+
+    Example:
+        >>> from v_router.classes.message import SystemMessage
+        >>>
+        >>> # Simple system message
+        >>> msg = SystemMessage("You are a helpful assistant.")
+        >>>
+        >>> # With optional fields
+        >>> msg = SystemMessage(
+        ...     content="You are a helpful assistant that answers questions about coding.",
+        ...     name="system",
+        ...     id="sys-123"
+        ... )
+
+    """
+
+    role: Literal["system"] = Field(
+        default="system",
+        description="Role is always 'system' for SystemMessage.",
+    )
+    name: Union[str, None] = Field(
+        default=None,
+        description="An optional name for the message. This can be used to provide a human-readable name.",
+    )
+    id: Union[str, None] = Field(
+        default=None,
+        description="An optional unique identifier for the message.",
+    )
+
+    def __init__(self, content: Union[str, List[ContentType], None] = None, **kwargs):
+        """Initialize a SystemMessage.
+
+        Args:
+            content: The content of the message as a positional argument.
+            **kwargs: Additional fields to pass to the message.
+
+        """
+        if content is not None:
+            kwargs["content"] = content
+        kwargs["role"] = "system"  # Always set role to "system"
+        super().__init__(**kwargs)
+
+    def text(self) -> str:
+        """Get the text content of the message.
+
+        Returns:
+            The text content of the message.
+
+        """
+        return self.get_text_content()

@@ -30,6 +30,7 @@ uv sync --all-extras
 
 ```python
 from v_router import Client, LLM
+from v_router import HumanMessage
 
 # Create an LLM configuration
 llm_config = LLM(
@@ -45,7 +46,7 @@ client = Client(llm_config)
 # Send a message
 response = await client.messages.create(
     messages=[
-        {"role": "user", "content": "Hello! Explain quantum computing in one sentence."}
+        HumanMessage(content="Hello! Explain quantum computing in one sentence.")
     ]
 )
 
@@ -60,6 +61,7 @@ Configure backup models to ensure reliability:
 
 ```python
 from v_router import Client, LLM, BackupModel
+from v_router import HumanMessage
 
 llm_config = LLM(
     model_name="claude-6",  # Primary model (might fail)
@@ -80,7 +82,9 @@ client = Client(llm_config)
 
 # If claude-6 fails, automatically tries gpt-4o, then gemini-1.5-pro
 response = await client.messages.create(
-    messages=[{"role": "user", "content": "What's 2+2?"}]
+    messages=[
+        HumanMessage(content="What's 2+2?")
+    ]
 )
 ```
 
@@ -89,6 +93,9 @@ response = await client.messages.create(
 Enable automatic cross-provider fallback for the same model:
 
 ```python
+from v_router import Client, LLM
+from v_router import HumanMessage
+
 llm_config = LLM(
     model_name="claude-opus-4",
     provider="vertexai",  # Try Vertex AI first
@@ -97,7 +104,9 @@ llm_config = LLM(
 
 client = Client(llm_config)
 response = await client.messages.create(
-    messages=[{"role": "user", "content": "Tell me a joke."}]
+    messages=[
+        HumanMessage(content="Tell me a joke.")
+    ]
 )
 ```
 
@@ -107,6 +116,7 @@ v-router supports provider-specific features through a flexible parameter system
 
 ```python
 from v_router import Client, LLM
+from v_router import HumanMessage
 
 # Configure core routing parameters
 client = Client(
@@ -120,8 +130,9 @@ client = Client(
 
 # Pass provider-specific parameters at message creation
 response = await client.messages.create(
-    messages=[{"role": "user", "content": "Solve this complex problem"}],
-    # Provider-specific parameters:
+    messages=[
+        HumanMessage(content="Solve this complex problem")
+    ],
     timeout=600,              # Anthropic: extended timeout
     thinking={                # Anthropic: thinking mode
         "type": "enabled",
@@ -135,7 +146,7 @@ response = await client.messages.create(
 **Anthropic** - Thinking mode, timeouts:
 ```python
 response = await client.messages.create(
-    messages=[...],
+    messages=[HumanMessage(content="...")],
     timeout=600,
     thinking={"type": "enabled", "budget_tokens": 10000},
     top_k=40
@@ -145,7 +156,7 @@ response = await client.messages.create(
 **OpenAI** - JSON mode, penalties:
 ```python
 response = await client.messages.create(
-    messages=[...],
+    messages=[HumanMessage(content="...")],
     response_format={"type": "json_object"},
     frequency_penalty=0.5,
     seed=12345
@@ -155,7 +166,7 @@ response = await client.messages.create(
 **Google** - Safety settings:
 ```python
 response = await client.messages.create(
-    messages=[...],
+    messages=[HumanMessage(content="...")],
     safety_settings=[{
         "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
         "threshold": "BLOCK_ONLY_HIGH"
@@ -171,6 +182,7 @@ v-router provides unified function calling across all providers:
 from pydantic import BaseModel, Field
 from v_router import Client, LLM
 from v_router.classes.tools import ToolCall, Tools
+from v_router import HumanMessage
 
 # Define tool schema
 class WeatherQuery(BaseModel):
@@ -195,14 +207,16 @@ client = Client(llm_config)
 
 # Make request
 response = await client.messages.create(
-    messages=[{"role": "user", "content": "What's the weather in Paris?"}]
+    messages=[
+        HumanMessage(content="What's the weather in Paris?")
+    ]
 )
 
 # Check for tool calls
-if response.tool_use:
-    for tool_call in response.tool_use:
+if response.tool_calls:
+    for tool_call in response.tool_calls:
         print(f"Tool: {tool_call.name}")
-        print(f"Arguments: {tool_call.arguments}")
+        print(f"Arguments: {tool_call.args}")
 ```
 
 ## 🖼️ Multimodal Support
@@ -212,6 +226,7 @@ Send images and PDFs seamlessly across providers:
 ```python
 from v_router import Client, LLM
 from v_router.classes.message import TextContent, ImageContent, DocumentContent
+from v_router import HumanMessage, SystemMessage
 
 # Create client
 client = Client(
@@ -224,14 +239,8 @@ client = Client(
 # Method 1: Send image by file path (automatic conversion)
 response = await client.messages.create(
     messages=[
-        {
-            "role": "user",
-            "content": "/path/to/image.jpg"  # Automatically converted to base64
-        },
-        {
-            "role": "user", 
-            "content": "What do you see in this image?"
-        }
+        HumanMessage(content="/path/to/image.jpg"),  # Automatically converted to base64
+        HumanMessage(content="What do you see in this image?")
     ]
 )
 
@@ -242,13 +251,10 @@ with open("image.jpg", "rb") as f:
 
 response = await client.messages.create(
     messages=[
-        {
-            "role": "user",
-            "content": [
-                TextContent(text="Analyze this image:"),
-                ImageContent(data=image_data, media_type="image/jpeg")
-            ]
-        }
+        HumanMessage(content=[
+            TextContent(text="Analyze this image:"),
+            ImageContent(data=image_data, media_type="image/jpeg")
+        ])
     ]
 )
 
@@ -350,12 +356,12 @@ All providers return the same unified response structure:
 
 ```python
 class Response:
-    content: List[Content]          # Text content blocks
-    tool_use: List[ToolUse]        # Function calls made
-    usage: Usage                   # Token usage info  
-    model: str                     # Actual model used
-    provider: str                  # Provider used
-    raw_response: Any              # Original provider response
+    content: list[Content]          # Text content blocks
+    tool_calls: list[ToolCall]      # Function calls made
+    usage: Usage                    # Token usage info  
+    model: str                      # Actual model used
+    provider: str                   # Provider used
+    raw_response: dict              # Original provider response
 ```
 
 ## 📖 Documentation

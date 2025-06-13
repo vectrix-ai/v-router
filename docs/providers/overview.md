@@ -181,9 +181,9 @@ response = await client.messages.create(
 )
 ```
 
-### Unified Response Format
+### Unified AIMessage Format
 ```python
-# Same response structure from all providers
+# Same AIMessage structure from all providers
 print(response.content[0].text)
 print(response.model)
 print(response.provider)

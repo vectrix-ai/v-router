@@ -12,8 +12,8 @@ if os.getenv("LANGFUSE_HOST"):
 else:
     get_client = None
 
-from v_router.classes.message import Message
-from v_router.classes.response import Content, Response, ToolUse, Usage
+from v_router.classes.messages import Message
+from v_router.classes.response import AIMessage, Content, ToolCall, Usage
 from v_router.classes.tools import Tools
 from v_router.providers.base import BaseProvider
 
@@ -47,7 +47,7 @@ class AnthropicProvider(BaseProvider):
         tools: Optional[Tools] = None,
         tool_choice: Optional[Any] = None,
         **kwargs,
-    ) -> Response:
+    ) -> AIMessage:
         """Create a message using Anthropic's API."""
         # Separate system messages from other messages
         system_message = None
@@ -105,7 +105,7 @@ class AnthropicProvider(BaseProvider):
 
         # Extract content from response
         content_list = []
-        tool_use_list = []
+        tool_call_list = []
 
         if response.content:
             for content_block in response.content:
@@ -118,11 +118,11 @@ class AnthropicProvider(BaseProvider):
                     hasattr(content_block, "type") and content_block.type == "tool_use"
                 ):
                     # Tool use content
-                    tool_use_list.append(
-                        ToolUse(
+                    tool_call_list.append(
+                        ToolCall(
                             id=content_block.id,
                             name=content_block.name,
-                            arguments=content_block.input,
+                            args=content_block.input,
                         )
                     )
 
@@ -151,9 +151,9 @@ class AnthropicProvider(BaseProvider):
         except Exception:
             raw_response = {}
 
-        return Response(
+        return AIMessage(
             content=content_list,
-            tool_use=tool_use_list,
+            tool_calls=tool_call_list,
             model=response.model,
             provider=self.name,
             usage=usage,
@@ -299,7 +299,7 @@ class AnthropicVertexProvider(BaseProvider):
         tools: Optional[Tools] = None,
         tool_choice: Optional[Any] = None,
         **kwargs,
-    ) -> Response:
+    ) -> AIMessage:
         """Create a message using Anthropic via Vertex AI."""
         # Separate system messages from other messages
         system_message = None
@@ -357,7 +357,7 @@ class AnthropicVertexProvider(BaseProvider):
 
         # Extract content from response
         content_list = []
-        tool_use_list = []
+        tool_call_list = []
 
         if response.content:
             for content_block in response.content:
@@ -370,11 +370,11 @@ class AnthropicVertexProvider(BaseProvider):
                     hasattr(content_block, "type") and content_block.type == "tool_use"
                 ):
                     # Tool use content
-                    tool_use_list.append(
-                        ToolUse(
+                    tool_call_list.append(
+                        ToolCall(
                             id=content_block.id,
                             name=content_block.name,
-                            arguments=content_block.input,
+                            args=content_block.input,
                         )
                     )
 
@@ -403,9 +403,9 @@ class AnthropicVertexProvider(BaseProvider):
         except Exception:
             raw_response = {}
 
-        return Response(
+        return AIMessage(
             content=content_list,
-            tool_use=tool_use_list,
+            tool_calls=tool_call_list,
             model=response.model,
             provider=self.name,
             usage=usage,

@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from v_router.classes.message import (
+from v_router.classes.messages import (
     DocumentContent,
     ImageContent,
     Message,

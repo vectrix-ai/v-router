@@ -16,11 +16,11 @@ class Content(BaseModel):
     text: str = Field(..., description="The text of the content.")
 
 
-class ToolUse(BaseModel):
+class ToolCall(BaseModel):
     """A tool use object from the LLM."""
 
     id: str = Field(..., description="The ID of the tool use.")
-    arguments: dict = Field(..., description="The arguments of the tool use.")
+    args: dict = Field(..., description="The arguments of the tool use.")
     name: str = Field(..., description="The name of the tool used.")
 
 
@@ -35,11 +35,12 @@ class Usage(BaseModel):
     )
 
 
-class Response(BaseModel):
-    """A response object from the LLM."""
+class AIMessage(BaseModel):
+    """An AI message response from the LLM."""
 
+    id: str | None = Field(None, description="The ID of the message.")
     content: list[Content] = Field(..., description="The content of the response.")
-    tool_use: list[ToolUse] = Field(
+    tool_calls: list[ToolCall] = Field(
         default_factory=list, description="The tool use of the response."
     )
     usage: Usage = Field(..., description="The usage of the response.")

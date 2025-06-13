@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from v_router.classes.message import Message
+from v_router.classes.messages import Message
 
 
 class TestMessage:
