@@ -283,8 +283,7 @@ class TestProviderMultimodalHandling:
             assert call_args["input"][0]["content"][1]["filename"] == "document.pdf"
             
             # Check the response content
-            assert len(response.content) == 1
-            assert response.content[0].text == "I can see the PDF content"
+            assert response.content == ["I can see the PDF content"]
 
     @pytest.mark.asyncio
     async def test_backward_compatibility_string_content(self):
@@ -333,4 +332,7 @@ class TestProviderMultimodalHandling:
                 response = await provider.create_message(
                     messages, "test-model", max_tokens=100
                 )
-                assert response.content[0].text == "Hello"
+                if isinstance(response.content, list):
+                    assert response.content[0] == "Hello"
+                else:
+                    assert response.content == "Hello"

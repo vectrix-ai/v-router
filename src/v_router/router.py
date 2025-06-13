@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Dict, List, Type
+from typing import Dict, List, Type, Union
 
 import yaml
 
@@ -10,8 +10,7 @@ else:
     get_client = None
 
 from v_router.classes.llm import LLM
-from v_router.classes.messages import Message
-from v_router.classes.response import AIMessage
+from v_router.classes.messages import AIMessage, Message
 from v_router.logger import setup_logger
 from v_router.providers.anthropic import AnthropicProvider, AnthropicVertexProvider
 from v_router.providers.base import BaseProvider
@@ -148,7 +147,9 @@ class Router:
 
         return self._provider_instances[provider_name]
 
-    async def route_request(self, messages: List[Message], **kwargs) -> AIMessage:
+    async def route_request(
+        self, messages: List[Union[Message, AIMessage]], **kwargs
+    ) -> AIMessage:
         """Route a request with automatic fallback handling.
 
         Args:
@@ -272,7 +273,7 @@ class Router:
         raise Exception(f"All providers failed:\n{error_summary}")
 
     async def _try_provider(
-        self, llm_config: LLM, messages: List[Message], **kwargs
+        self, llm_config: LLM, messages: List[Union[Message, AIMessage]], **kwargs
     ) -> AIMessage:
         """Try to send a request to a specific provider.
 

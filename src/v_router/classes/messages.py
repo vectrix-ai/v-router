@@ -397,3 +397,49 @@ class ToolMessage(Message):
         if html:
             return f"<div><strong>{tool_str}</strong>{content_str}</div>"
         return f"{tool_str}{content_str}"
+
+
+# Response-related classes moved from response.py
+class ToolCall(BaseModel):
+    """A tool use object from the LLM."""
+
+    id: str = Field(..., description="The ID of the tool use.")
+    args: dict = Field(..., description="The arguments of the tool use.")
+    name: str = Field(..., description="The name of the tool used.")
+
+
+class Usage(BaseModel):
+    """A usage object from the LLM."""
+
+    input_tokens: int | None = Field(
+        None, description="The number of input tokens used."
+    )
+    output_tokens: int | None = Field(
+        None, description="The number of output tokens used."
+    )
+
+
+class AIMessage(BaseModel):
+    """An AI message response from the LLM."""
+
+    id: str | None = Field(None, description="The ID of the message.")
+    content: Union[str, List[str]] = Field(
+        ..., description="The content of the response."
+    )
+    tool_calls: list[ToolCall] = Field(
+        default_factory=list, description="The tool use of the response."
+    )
+    usage: Usage = Field(..., description="The usage of the response.")
+    model: str = Field(..., description="The model used to generate the response.")
+    provider: str = Field(
+        ..., description="The provider used to generate the response."
+    )
+    raw_response: dict = Field(..., description="The raw response from the LLM.")
+
+    def get_text_content(self) -> str:
+        """Extract text content from the message."""
+        if isinstance(self.content, str):
+            return self.content
+        elif isinstance(self.content, list):
+            return " ".join(self.content)
+        return ""

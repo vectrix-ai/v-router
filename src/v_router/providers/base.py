@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Union
 
-from v_router.classes.messages import Message
-from v_router.classes.response import AIMessage
+from v_router.classes.messages import AIMessage, Message
 from v_router.classes.tools import Tools
 
 
@@ -23,7 +22,7 @@ class BaseProvider(ABC):
     @abstractmethod
     async def create_message(
         self,
-        messages: List[Message],
+        messages: List[Union[Message, AIMessage]],
         model: str,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,

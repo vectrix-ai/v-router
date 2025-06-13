@@ -15,8 +15,7 @@ else:
 
 
 from v_router.classes.llm import LLM
-from v_router.classes.messages import Message
-from v_router.classes.response import AIMessage
+from v_router.classes.messages import AIMessage, Message
 from v_router.router import Router
 
 
@@ -57,8 +56,8 @@ class Messages:
         # Convert to Message objects if needed
         message_objects = []
         for msg in messages:
-            if isinstance(msg, Message):
-                # Already a Message object (including HumanMessage)
+            if isinstance(msg, Message | AIMessage):
+                # Already a Message or AIMessage object - pass through as-is
                 message_objects.append(msg)
             else:
                 # Dictionary, convert to Message
