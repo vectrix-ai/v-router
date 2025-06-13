@@ -1,7 +1,7 @@
 import base64
 import mimetypes
 from pathlib import Path
-from typing import List, Literal, Union
+from typing import Any, List, Literal, Union
 
 import mammoth
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -51,9 +51,9 @@ ContentType = Union[TextContent, ImageContent, DocumentContent]
 class Message(BaseModel):
     """A single message object in a chat conversation."""
 
-    role: Literal["user", "assistant", "system"] = Field(
+    role: Literal["user", "assistant", "system", "tool"] = Field(
         ...,
-        description="Role of the message sender, can be 'user', 'assistant', or 'system'.",
+        description="Role of the message sender, can be 'user', 'assistant', 'system', or 'tool'.",
     )
     content: Union[str, List[ContentType]] = Field(
         ...,
@@ -198,21 +198,12 @@ class HumanMessage(Message):
     HumanMessages are messages that are passed in from a human to the model.
     The role is always set to "user" and cannot be changed.
 
-    Example:
-        >>> from v_router.classes.message import HumanMessage
-        >>>
-        >>> # Simple text message
-        >>> msg = HumanMessage("What's the weather?")
-        >>>
-        >>> # With image
-        >>> msg = HumanMessage("/path/to/image.png")
-        >>>
-        >>> # With optional fields
-        >>> msg = HumanMessage(
-        ...     content="Hello",
-        ...     name="John",
-        ...     id="msg-123"
-        ... )
+    Args:
+        content: The content of the message as a positional argument.
+        **kwargs: Additional fields to pass to the message.
+
+    Returns:
+        A HumanMessage object.
 
     """
 
@@ -262,18 +253,12 @@ class SystemMessage(Message):
     SystemMessages are messages that provide context or instructions to the model.
     The role is always set to "system" and cannot be changed.
 
-    Example:
-        >>> from v_router.classes.message import SystemMessage
-        >>>
-        >>> # Simple system message
-        >>> msg = SystemMessage("You are a helpful assistant.")
-        >>>
-        >>> # With optional fields
-        >>> msg = SystemMessage(
-        ...     content="You are a helpful assistant that answers questions about coding.",
-        ...     name="system",
-        ...     id="sys-123"
-        ... )
+    Args:
+        content: The content of the message as a positional argument.
+        **kwargs: Additional fields to pass to the message.
+
+    Returns:
+        A SystemMessage object.
 
     """
 
@@ -311,3 +296,104 @@ class SystemMessage(Message):
 
         """
         return self.get_text_content()
+
+
+class ToolMessage(Message):
+    """Message from a tool.
+
+    ToolMessages are messages that are passed in from a tool to the model.
+    The role is always set to "tool" and cannot be changed.
+
+    Args:
+        content: The content of the message as a positional argument.
+        tool_call_id: Tool call that this message is responding to.
+        status: Status of the tool invocation. Defaults to 'success'.
+        artifact: Optional artifact of the Tool execution which is not meant to be sent to the model.
+        **kwargs: Additional fields to pass to the message.
+
+    Returns:
+        A ToolMessage object.
+
+    """
+
+    role: Literal["tool"] = Field(
+        default="tool",
+        description="Role is always 'tool' for ToolMessage.",
+    )
+    tool_call_id: str = Field(
+        ...,
+        description="Tool call that this message is responding to.",
+    )
+    status: Literal["success", "error"] = Field(
+        default="success",
+        description="Status of the tool invocation.",
+    )
+    name: Union[str, None] = Field(
+        default=None,
+        description="An optional name for the message. This can be used to provide a human-readable name.",
+    )
+    id: Union[str, None] = Field(
+        default=None,
+        description="An optional unique identifier for the message.",
+    )
+    artifact: Any = Field(
+        default=None,
+        description="Artifact of the Tool execution which is not meant to be sent to the model.",
+    )
+
+    def __init__(
+        self,
+        content: Union[str, List[ContentType], None] = None,
+        tool_call_id: str = None,
+        status: Literal["success", "error"] = "success",
+        artifact: Any = None,
+        **kwargs,
+    ):
+        """Initialize a ToolMessage.
+
+        Args:
+            content: The content of the message as a positional argument.
+            tool_call_id: Tool call that this message is responding to.
+            status: Status of the tool invocation. Defaults to 'success'.
+            artifact: Optional artifact of the Tool execution.
+            **kwargs: Additional fields to pass to the message.
+
+        """
+        if content is not None:
+            kwargs["content"] = content
+        if tool_call_id is not None:
+            kwargs["tool_call_id"] = tool_call_id
+        if status is not None:
+            kwargs["status"] = status
+        if artifact is not None:
+            kwargs["artifact"] = artifact
+        kwargs["role"] = "tool"  # Always set role to "tool"
+        super().__init__(**kwargs)
+
+    def text(self) -> str:
+        """Get the text content of the message.
+
+        Returns:
+            The text content of the message.
+
+        """
+        return self.get_text_content()
+
+    def pretty_repr(self, html: bool = False) -> str:
+        """Get a pretty representation of the message.
+
+        Args:
+            html: Whether to format the message as HTML. If True, the message will be
+                formatted with HTML tags. Default is False.
+
+        Returns:
+            A pretty representation of the message.
+
+        """
+        status_str = f" [{self.status}]" if self.status != "success" else ""
+        tool_str = f"Tool (ID: {self.tool_call_id}){status_str}: "
+        content_str = self.text()
+
+        if html:
+            return f"<div><strong>{tool_str}</strong>{content_str}</div>"
+        return f"{tool_str}{content_str}"

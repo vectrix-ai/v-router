@@ -8,7 +8,7 @@ import mammoth
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
-from v_router.classes.messages import Message
+from v_router.classes.messages import Message, ToolMessage
 from v_router.classes.response import AIMessage, Content, ToolCall, Usage
 from v_router.classes.tools import Tools
 from v_router.providers.base import BaseProvider
@@ -176,7 +176,16 @@ class OpenAIProvider(BaseProvider):
         # Convert messages to OpenAI format
         openai_messages = []
         for msg in messages:
-            if isinstance(msg.content, str):
+            if isinstance(msg, ToolMessage):
+                # Handle tool messages
+                openai_messages.append(
+                    {
+                        "role": "tool",
+                        "content": msg.get_text_content(),
+                        "tool_call_id": msg.tool_call_id,
+                    }
+                )
+            elif isinstance(msg.content, str):
                 # Simple string content
                 openai_messages.append({"role": msg.role, "content": msg.content})
             else:
@@ -505,7 +514,16 @@ class AzureOpenAIProvider(BaseProvider):
         # Convert messages to OpenAI format
         openai_messages = []
         for msg in messages:
-            if isinstance(msg.content, str):
+            if isinstance(msg, ToolMessage):
+                # Handle tool messages
+                openai_messages.append(
+                    {
+                        "role": "tool",
+                        "content": msg.get_text_content(),
+                        "tool_call_id": msg.tool_call_id,
+                    }
+                )
+            elif isinstance(msg.content, str):
                 # Simple string content
                 openai_messages.append({"role": msg.role, "content": msg.content})
             else:

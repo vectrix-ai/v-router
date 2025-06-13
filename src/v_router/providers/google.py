@@ -11,7 +11,7 @@ if os.getenv("LANGFUSE_HOST"):
 else:
     get_client = None
 
-from v_router.classes.messages import Message
+from v_router.classes.messages import Message, ToolMessage
 from v_router.classes.response import AIMessage, Content, ToolCall, Usage
 from v_router.classes.tools import Tools
 from v_router.providers.base import BaseProvider
@@ -228,7 +228,22 @@ class GoogleProvider(BaseProvider):
         """Format messages for Google API."""
         contents = []
         for msg in messages:
-            if msg.role == "system":
+            if isinstance(msg, ToolMessage):
+                # Handle tool messages - Google expects function responses as user messages
+                contents.append(
+                    genai.types.Content(
+                        role="user",
+                        parts=[
+                            genai.types.Part.from_function_response(
+                                name=msg.tool_call_id.split("_")[1]
+                                if "_" in msg.tool_call_id
+                                else msg.tool_call_id,
+                                response={"result": msg.get_text_content()},
+                            )
+                        ],
+                    )
+                )
+            elif msg.role == "system":
                 # Google doesn't have a separate system role, so we'll include it as user content
                 contents.append(
                     genai.types.Content(
@@ -514,7 +529,22 @@ class GoogleVertexProvider(BaseProvider):
         """Format messages for Google API."""
         contents = []
         for msg in messages:
-            if msg.role == "system":
+            if isinstance(msg, ToolMessage):
+                # Handle tool messages - Google expects function responses as user messages
+                contents.append(
+                    genai.types.Content(
+                        role="user",
+                        parts=[
+                            genai.types.Part.from_function_response(
+                                name=msg.tool_call_id.split("_")[1]
+                                if "_" in msg.tool_call_id
+                                else msg.tool_call_id,
+                                response={"result": msg.get_text_content()},
+                            )
+                        ],
+                    )
+                )
+            elif msg.role == "system":
                 # Google doesn't have a separate system role, so we'll include it as user content
                 contents.append(
                     genai.types.Content(

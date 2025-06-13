@@ -12,7 +12,7 @@ if os.getenv("LANGFUSE_HOST"):
 else:
     get_client = None
 
-from v_router.classes.messages import Message
+from v_router.classes.messages import Message, ToolMessage
 from v_router.classes.response import AIMessage, Content, ToolCall, Usage
 from v_router.classes.tools import Tools
 from v_router.providers.base import BaseProvider
@@ -57,6 +57,20 @@ class AnthropicProvider(BaseProvider):
             if msg.role == "system":
                 # Anthropic expects system as a separate parameter
                 system_message = msg.get_text_content()
+            elif isinstance(msg, ToolMessage):
+                # Handle tool messages - Anthropic expects tool results as user messages
+                anthropic_messages.append(
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": msg.tool_call_id,
+                                "content": msg.get_text_content(),
+                            }
+                        ],
+                    }
+                )
             else:
                 # Convert message content to Anthropic format
                 if isinstance(msg.content, str):
@@ -309,6 +323,20 @@ class AnthropicVertexProvider(BaseProvider):
             if msg.role == "system":
                 # Anthropic expects system as a separate parameter
                 system_message = msg.get_text_content()
+            elif isinstance(msg, ToolMessage):
+                # Handle tool messages - Anthropic expects tool results as user messages
+                anthropic_messages.append(
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": msg.tool_call_id,
+                                "content": msg.get_text_content(),
+                            }
+                        ],
+                    }
+                )
             else:
                 # Convert message content to Anthropic format
                 if isinstance(msg.content, str):
